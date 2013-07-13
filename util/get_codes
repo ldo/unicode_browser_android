@@ -10,11 +10,19 @@ import sys
 import re
 
 src_file = "/usr/share/unicode/NamesList.txt"
+versionstr = "@@@\tThe Unicode Standard "
 
 with open(file = src_file, errors = "ignore") as src :
     charcode = None
     char_category = None
     eof = False
+    line = src.readline().rstrip()
+    if line.startswith(versionstr) :
+        version = line[len(versionstr):]
+        sys.stdout.write("Unicode version: “%s”\n" % version)
+    else :
+        raise AssertionError("first line doesn’t contain version")
+    #end if
     while True :
         line = src.readline()
         if len(line) == 0 :
