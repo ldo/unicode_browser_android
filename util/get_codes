@@ -48,7 +48,7 @@ with open(file = src_file, errors = "ignore") as src :
                         charname,
                         char_category,
                         "; ".join(samechar),
-                        "; ".join(likechar),
+                        "; ".join("U+%04X" % c for c in likechar),
                     )
               )
             charcode = None
@@ -66,7 +66,15 @@ with open(file = src_file, errors = "ignore") as src :
             if line.startswith("= ") :
                 samechar.add(line[2:])
             elif line.startswith("x ") :
-                likechar.add(line[2:])
+                nextpos = 2
+                while True :
+                    nextlikecharcode = re.search(r"[0-9A-F]+", line[nextpos:])
+                    if nextlikecharcode == None :
+                        break
+                    likecharcode = int(nextlikecharcode.group(), 16)
+                    nextpos += nextlikecharcode.end()
+                #end while
+                likechar.add(likecharcode)
             else :
                 pass # sys.stdout.write("Ignore line for U+%04X: %s\n" % (charcode, repr(line)))
             #end if
