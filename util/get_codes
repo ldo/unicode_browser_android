@@ -160,10 +160,12 @@ out.write \
   )
 out.write("\n")
 out.write("    public static final HashMap<Integer, String> CategoryNames = new HashMap<Integer, String>();\n")
+out.write("    public static final HashMap<String, Integer> CategoryCodes = new HashMap<String, Integer>();\n")
 out.write("    static\n")
 out.write("      {\n")
 for name in categories :
     out.write("        CategoryNames.put(%d, \"%s\");\n" % (category_codes[name], name))
+    out.write("        CategoryCodes.put(\"%s\", %d);\n" % (name, category_codes[name]))
 #end for
 out.write("      } /*static*/\n")
 out.write("\n")
