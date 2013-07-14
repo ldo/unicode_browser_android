@@ -168,7 +168,8 @@ out.write("\n")
 out.write("    public static final HashMap<String, Integer> CharNamesToCodes = new HashMap<String, Integer>();\n")
 out.write("    public static final HashMap<Integer, CharInfo> Chars = new HashMap<Integer, CharInfo>(); /* mapping from character code to info about character */\n")
 # initialization code for the character table has to be split up into multiple method
-# calls to avoid “Code too large” error in the Java compiler
+# calls to avoid a “code too large” error in the Java compiler, and then these method
+# calls have to be put into separate classes to avoid a “too many constants” error.
 charsiter = iter(chars)
 nrsegs = 0
 curseg = None
@@ -178,6 +179,7 @@ while True :
     charcode = next(charsiter, None)
     if charcode == None or curseg != None and curseglen == maxseg :
         if curseg != None :
+            out.write("          } /*%s*/\n" % curseg)
             out.write("      } /*%s*/\n" % curseg)
             curseg = None
         #end if
@@ -188,8 +190,10 @@ while True :
     if curseg == None :
         nrsegs += 1
         curseg = "CharsInit%d" % nrsegs
-        out.write("    private static void %s()\n" % curseg)
+        out.write("    private static class %s\n" % curseg)
         out.write("      {\n")
+        out.write("        public %s()\n" % curseg)
+        out.write("          {\n")
         segs.append(curseg)
         curseglen = 0
     #end if
@@ -211,7 +215,7 @@ while True :
 out.write("    static\n")
 out.write("      {\n")
 for seg in segs :
-    out.write("        %s();\n" % seg)
+    out.write("        new %s();\n" % seg)
 #end for
 out.write("      } /*static*/\n")
 out.write("\n")
