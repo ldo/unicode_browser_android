@@ -145,7 +145,7 @@ public class Main extends android.app.Activity
               (
                 String.format
                   (
-                    "U+%#04X -- %s",
+                    "U+%04X -- %s",
                     ThisItem.CharCode,
                     ThisItem.Info.Name
                   )
