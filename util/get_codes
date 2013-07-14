@@ -167,10 +167,32 @@ out.write("      } /*static*/\n")
 out.write("\n")
 out.write("    public static final HashMap<String, Integer> CharNamesToCodes = new HashMap<String, Integer>();\n")
 out.write("    public static final HashMap<Integer, CharInfo> Chars = new HashMap<Integer, CharInfo>(); /* mapping from character code to info about character */\n")
-out.write("    static\n")
-out.write("      {\n")
-for charcode in chars :
+# initialization code for the character table has to be split up into multiple method
+# calls to avoid “Code too large” error in the Java compiler
+charsiter = iter(chars)
+nrsegs = 0
+curseg = None
+segs = []
+maxseg = 1000
+while True :
+    charcode = next(charsiter, None)
+    if charcode == None or curseg != None and curseglen == maxseg :
+        if curseg != None :
+            out.write("      } /*%s*/\n" % curseg)
+            curseg = None
+        #end if
+    #end if
+    if charcode == None :
+        break
     thischar = chars[charcode]
+    if curseg == None :
+        nrsegs += 1
+        curseg = "CharsInit%d" % nrsegs
+        out.write("    private static void %s()\n" % curseg)
+        out.write("      {\n")
+        segs.append(curseg)
+        curseglen = 0
+    #end if
     out.write("        CharNamesToCodes.put(\"%s\", %#x);\n" % (thischar["name"], charcode))
     out.write("        Chars.put\n")
     out.write("          (\n")
@@ -183,6 +205,13 @@ for charcode in chars :
     out.write("                /*LikeChars =*/ new int[] {%s}\n" % ", ".join("%#x" % i for i in thischar["similar"]))
     out.write("              )\n")
     out.write("          );\n")
+#end for
+    curseglen += 1
+#end while
+out.write("    static\n")
+out.write("      {\n")
+for seg in segs :
+    out.write("        %s();\n" % seg)
 #end for
 out.write("      } /*static*/\n")
 out.write("\n")
