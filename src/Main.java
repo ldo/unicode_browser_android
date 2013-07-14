@@ -143,25 +143,21 @@ public class Main extends android.app.Activity
             final CharItem ThisItem = getItem(Position);
             ((android.widget.TextView)TheView.findViewById(R.id.code)).setText
               (
-                String.format
-                  (
-                    "U+%04X",
-                    ThisItem.CharCode
-                  )
+                String.format("U+%04X", ThisItem.CharCode)
               );
             ((android.widget.TextView)TheView.findViewById(R.id.literal)).setText
               (
-                ThisItem.CharCode > 0xffff ?
-                    new String
-                      (
+                new String
+                  (
+                    ThisItem.CharCode > 0xffff ?
                         new char[]
-                            {
+                            { /* encode as UTF-16, as Java requires */
                                 (char)(ThisItem.CharCode >> 10 & 0x3ff | 0xd800),
                                 (char)(ThisItem.CharCode & 0x3ff | 0xdc00),
                             }
-                      )
-                :
-                    new String(new char[] {(char)ThisItem.CharCode})
+                    :
+                        new char[] {(char)ThisItem.CharCode}
+                  )
               );
             ((android.widget.TextView)TheView.findViewById(R.id.name)).setText
               (
