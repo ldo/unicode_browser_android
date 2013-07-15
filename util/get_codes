@@ -129,6 +129,7 @@ out.write \
         version
   )
 out.write("import java.util.HashMap;\n")
+out.write("import android.util.SparseArray;\n")
 out.write("public class Unicode\n")
 out.write("  {\n")
 out.write("    public static final String Version = \"%s\";\n" % version)
@@ -159,7 +160,7 @@ out.write \
     "      } /*CharInfo*/\n"
   )
 out.write("\n")
-out.write("    public static final HashMap<Integer, String> CategoryNames = new HashMap<Integer, String>();\n")
+out.write("    public static final SparseArray<String> CategoryNames = new SparseArray<String>();\n")
 out.write("    public static final HashMap<String, Integer> CategoryCodes = new HashMap<String, Integer>();\n")
 out.write("    static\n")
 out.write("      {\n")
@@ -170,7 +171,7 @@ for name in categories :
 out.write("      } /*static*/\n")
 out.write("\n")
 out.write("    public static final HashMap<String, Integer> CharNamesToCodes = new HashMap<String, Integer>();\n")
-out.write("    public static final HashMap<Integer, CharInfo> Chars = new HashMap<Integer, CharInfo>(); /* mapping from character code to info about character */\n")
+out.write("    public static final SparseArray<CharInfo> Chars = new SparseArray<CharInfo>(); /* mapping from character code to info about character */\n")
 # initialization code for the character table has to be split up into multiple method
 # calls to avoid a “code too large” error in the Java compiler, and then these method
 # calls have to be put into separate classes to avoid a “too many constants” error.

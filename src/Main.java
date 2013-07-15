@@ -173,9 +173,10 @@ public class Main extends android.app.Activity
     private void RebuildCharList()
       {
         CharList.clear();
-        for (int CharCode : Unicode.Chars.keySet())
+        for (int i = 0; i < Unicode.Chars.size(); ++i)
           {
-            final Unicode.CharInfo ThisChar = Unicode.Chars.get(CharCode);
+            final int CharCode = Unicode.Chars.keyAt(i);
+            final Unicode.CharInfo ThisChar = Unicode.Chars.valueAt(i);
             if (ThisChar.Category == ShowCategory)
               {
                 CharList.add(new CharItem(CharCode, ThisChar));
@@ -196,8 +197,9 @@ public class Main extends android.app.Activity
             int Selected = 0;
             final android.widget.Spinner SelectShowing = (android.widget.Spinner)findViewById(R.id.show_selector);
             CategoryList = new CategoryItemAdapter(getLayoutInflater());
-            for (int CategoryCode : Unicode.CategoryNames.keySet())
+            for (int i = 0; i < Unicode.CategoryNames.size(); ++i)
               {
+                final int CategoryCode = Unicode.CategoryNames.keyAt(i);
                 if (CategoryCode == ShowCategory)
                   {
                     Selected = CategoryList.getCount();
