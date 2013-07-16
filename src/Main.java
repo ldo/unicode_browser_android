@@ -31,7 +31,7 @@ public class Main extends android.app.Activity
 
       } /*CategoryItem*/;
 
-    class CategoryClick implements android.widget.AdapterView.OnItemSelectedListener
+    class CategorySelect implements android.widget.AdapterView.OnItemSelectedListener
       {
 
         public void onItemSelected
@@ -54,7 +54,7 @@ public class Main extends android.app.Activity
           /* can't think of anything to do */
           } /*onNothingSelected*/
 
-      } /*CategoryClick*/;
+      } /*CategorySelect*/;
 
     class CategoryItemAdapter extends android.widget.ArrayAdapter<CategoryItem>
       {
@@ -208,7 +208,7 @@ public class Main extends android.app.Activity
               } /*for*/
             final android.widget.Spinner CategoryListView = (android.widget.Spinner)findViewById(R.id.show_selector);
             CategoryListView.setAdapter(CategoryList);
-            CategoryListView.setOnItemSelectedListener(new CategoryClick());
+            CategoryListView.setOnItemSelectedListener(new CategorySelect());
             CategoryListView.setSelection(Selected);
           }
         CharList = new CharItemAdapter(R.layout.main_list_item, getLayoutInflater());
