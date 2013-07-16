@@ -39,7 +39,7 @@
             android:text=""
             style="@style/text_common"
         />
-        <TextView
+        <Button
             android:id="@+id/category"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

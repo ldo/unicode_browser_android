@@ -9,10 +9,13 @@ import android.widget.ListView;
 public class Main extends android.app.Activity
   {
 
+    private android.widget.Spinner CategoryListView;
     private CategoryItemAdapter CategoryList;
     private int ShowCategory = Unicode.CategoryCodes.get("Lowercase Latin alphabet");
     private CharItemAdapter MainCharList, LikeCharList;
     private ArrayAdapter<String> OtherNamesList;
+    private android.widget.Button DetailCategoryButton;
+    private int DetailCategory = -1;
 
     static class CategoryItem
       {
@@ -37,6 +40,28 @@ public class Main extends android.app.Activity
 
       } /*CategoryItem*/;
 
+    private void SetShowingCategory
+      (
+        int NewCategory
+      )
+      {
+        ShowCategory = NewCategory;
+          {
+            int Selected;
+            for (int i = 0;;)
+              {
+                if (Unicode.CategoryNames.keyAt(i) == ShowCategory)
+                  {
+                    Selected = i;
+                    break;
+                  } /*if*/
+                ++i;
+              } /*for*/
+            CategoryListView.setSelection(Selected);
+          }
+        RebuildMainCharList();
+      } /*SetShowingCategory*/
+
     class CategorySelect implements AdapterView.OnItemSelectedListener
       {
 
@@ -48,8 +73,7 @@ public class Main extends android.app.Activity
             long ID
           )
           {
-            ShowCategory = CategoryList.getItem(Position).Code;
-            RebuildMainCharList();
+            SetShowingCategory(CategoryList.getItem(Position).Code);
           } /*onClick*/
 
         public void onNothingSelected
@@ -223,10 +247,11 @@ public class Main extends android.app.Activity
                 TheChar.Info.Name
               )
           );
-        ((TextView)findViewById(R.id.category)).setText
+        DetailCategoryButton.setText
           (
             Unicode.CategoryNames.get(TheChar.Info.Category)
           );
+        DetailCategory = TheChar.Info.Category;
         OtherNamesList.clear();
         for (String Name : TheChar.Info.OtherNames)
           {
@@ -251,8 +276,7 @@ public class Main extends android.app.Activity
         setContentView(R.layout.main);
           {
             int Selected = 0;
-            final android.widget.Spinner CategoryListView =
-                (android.widget.Spinner)findViewById(R.id.show_selector);
+            CategoryListView = (android.widget.Spinner)findViewById(R.id.show_selector);
             CategoryList = new CategoryItemAdapter();
             for (int i = 0; i < Unicode.CategoryNames.size(); ++i)
               {
@@ -284,6 +308,23 @@ public class Main extends android.app.Activity
             CharListView.setAdapter(LikeCharList);
             CharListView.setOnItemClickListener(new CharSelect());
           }
+        DetailCategoryButton = (android.widget.Button)findViewById(R.id.category);
+        DetailCategoryButton.setOnClickListener
+          (
+            new View.OnClickListener()
+              {
+                public void onClick
+                  (
+                    View TheView
+                  )
+                  {
+                    if (DetailCategory >= 0)
+                      {
+                        SetShowingCategory(DetailCategory);
+                      } /*if*/
+                  } /*onClick*/
+              }
+          );
         RebuildMainCharList();
       } /*onCreate*/
 
