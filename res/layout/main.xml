@@ -13,6 +13,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/show_prompt"
+            style="@style/text_common"
         />
         <Spinner
             android:id="@+id/show_selector"
@@ -36,12 +37,14 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text=""
+            style="@style/text_common"
         />
         <TextView
             android:id="@+id/category"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text=""
+            style="@style/text_common"
         />
         <ListView
             android:id="@+id/names_list"

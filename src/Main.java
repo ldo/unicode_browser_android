@@ -276,7 +276,7 @@ public class Main extends android.app.Activity
             CharListView.setAdapter(MainCharList);
             CharListView.setOnItemClickListener(new CharSelect());
           }
-        OtherNamesList = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1);
+        OtherNamesList = new ArrayAdapter<String>(this, R.layout.name_list_item);
         ((ListView)findViewById(R.id.names_list)).setAdapter(OtherNamesList);
           {
             final ListView CharListView = (ListView)findViewById(R.id.like_list);
