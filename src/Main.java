@@ -199,7 +199,7 @@ public class Main extends android.app.Activity
         setContentView(R.layout.main);
           {
             int Selected = 0;
-            final android.widget.Spinner SelectShowing = (android.widget.Spinner)findViewById(R.id.show_selector);
+            final android.widget.Spinner CategoryListView = (android.widget.Spinner)findViewById(R.id.show_selector);
             CategoryList = new CategoryItemAdapter(getLayoutInflater());
             for (int i = 0; i < Unicode.CategoryNames.size(); ++i)
               {
@@ -210,7 +210,6 @@ public class Main extends android.app.Activity
                   } /*if*/
                 CategoryList.add(new CategoryItem(CategoryCode, Unicode.CategoryNames.get(CategoryCode)));
               } /*for*/
-            final android.widget.Spinner CategoryListView = (android.widget.Spinner)findViewById(R.id.show_selector);
             CategoryListView.setAdapter(CategoryList);
             CategoryListView.setOnItemSelectedListener(new CategorySelect());
             CategoryListView.setSelection(Selected);
