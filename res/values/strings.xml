@@ -3,4 +3,6 @@
     <string name="app_name">Unicode Selector</string>
 
     <string name="show_prompt">Show Category:</string>
+    <string name="aka">AKA:</string>
+    <string name="see_also">See Also:</string>
 </resources>
