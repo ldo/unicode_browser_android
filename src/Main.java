@@ -3,14 +3,16 @@ package nz.gen.geek_central.unicode_selector;
 import android.view.View;
 import android.view.LayoutInflater;
 import android.widget.TextView;
+import android.widget.ArrayAdapter;
 import android.widget.AdapterView;
+import android.widget.ListView;
 public class Main extends android.app.Activity
   {
 
     private CategoryItemAdapter CategoryList;
-    private android.widget.ListView CharListView;
-    private CharItemAdapter CharList;
     private int ShowCategory = Unicode.CategoryCodes.get("Lowercase Latin alphabet");
+    private CharItemAdapter MainCharList, LikeCharList;
+    private ArrayAdapter<String> OtherNamesList;
 
     static class CategoryItem
       {
@@ -47,7 +49,7 @@ public class Main extends android.app.Activity
           )
           {
             ShowCategory = CategoryList.getItem(Position).Code;
-            RebuildCharList();
+            RebuildMainCharList();
           } /*onClick*/
 
         public void onNothingSelected
@@ -60,18 +62,14 @@ public class Main extends android.app.Activity
 
       } /*CategorySelect*/;
 
-    class CategoryItemAdapter extends android.widget.ArrayAdapter<CategoryItem>
+    class CategoryItemAdapter extends ArrayAdapter<CategoryItem>
       {
         static final int ResID = android.R.layout.simple_dropdown_item_1line;
-        final LayoutInflater TemplateInflater;
+        final LayoutInflater TemplateInflater = Main.this.getLayoutInflater();
 
-        public CategoryItemAdapter
-          (
-            LayoutInflater TemplateInflater
-          )
+        public CategoryItemAdapter()
           {
             super(Main.this, ResID);
-            this.TemplateInflater = TemplateInflater;
           } /*CategoryItemAdapter*/
 
         @Override
@@ -115,20 +113,44 @@ public class Main extends android.app.Activity
 
       } /*CharItem*/;
 
-    class CharItemAdapter extends android.widget.ArrayAdapter<CharItem>
+    public static String FormatCharCode
+      (
+        int Code
+      )
+      /* returns the conventional U+xxxx representation for a Unicode character code. */
       {
-        final int ResID;
-        final LayoutInflater TemplateInflater;
+        return
+            String.format(java.util.Locale.US, "U+%04X", Code);
+      } /*FormatCharCode*/
 
-        CharItemAdapter
-          (
-            int ResID,
-            LayoutInflater TemplateInflater
-          )
+    public static String CharToString
+      (
+        int Code
+      )
+      /* returns a literal string containing the single specified character. */
+      {
+        return
+            new String
+              (
+                Code > 0xffff ?
+                    new char[]
+                        { /* encode as UTF-16, as Java requires */
+                            (char)(Code >> 10 & 0x3ff | 0xd800),
+                            (char)(Code & 0x3ff | 0xdc00),
+                        }
+                :
+                    new char[] {(char)Code}
+              );
+      } /*CharToString*/
+
+    class CharItemAdapter extends ArrayAdapter<CharItem>
+      {
+        static final int ResID = R.layout.char_list_item;
+        final LayoutInflater TemplateInflater = Main.this.getLayoutInflater();
+
+        CharItemAdapter()
           {
             super(Main.this, ResID);
-            this.ResID = ResID;
-            this.TemplateInflater = TemplateInflater;
           } /*CharItemAdapter*/
 
         @Override
@@ -145,49 +167,79 @@ public class Main extends android.app.Activity
                 TheView = TemplateInflater.inflate(ResID, null);
               } /*if*/
             final CharItem ThisItem = getItem(Position);
-            ((TextView)TheView.findViewById(R.id.code)).setText
-              (
-                String.format("U+%04X", ThisItem.CharCode)
-              );
-            ((TextView)TheView.findViewById(R.id.literal)).setText
-              (
-                new String
-                  (
-                    ThisItem.CharCode > 0xffff ?
-                        new char[]
-                            { /* encode as UTF-16, as Java requires */
-                                (char)(ThisItem.CharCode >> 10 & 0x3ff | 0xd800),
-                                (char)(ThisItem.CharCode & 0x3ff | 0xdc00),
-                            }
-                    :
-                        new char[] {(char)ThisItem.CharCode}
-                  )
-              );
-            ((TextView)TheView.findViewById(R.id.name)).setText
-              (
-                ThisItem.Info.Name
-              );
-          /* more TBD */
+            ((TextView)TheView.findViewById(R.id.code)).setText(FormatCharCode(ThisItem.CharCode));
+            ((TextView)TheView.findViewById(R.id.literal)).setText(CharToString(ThisItem.CharCode));
+            ((TextView)TheView.findViewById(R.id.name)).setText(ThisItem.Info.Name);
             return
                 TheView;
           } /*getView*/
 
       } /*CharItemAdapter*/;
 
-    private void RebuildCharList()
+    class CharSelect implements AdapterView.OnItemClickListener
       {
-        CharList.clear();
+
+        public void onItemClick
+          (
+            AdapterView<?> Parent,
+            View ItemView,
+            int Position,
+            long ID
+          )
+          {
+            ShowCharDetails((CharItem)Parent.getAdapter().getItem(Position));
+          } /*onItemClick*/
+
+      } /*CharSelect*/;
+
+    private void RebuildMainCharList()
+      {
+        MainCharList.clear();
         for (int i = 0; i < Unicode.Chars.size(); ++i)
           {
             final int CharCode = Unicode.Chars.keyAt(i);
             final Unicode.CharInfo ThisChar = Unicode.Chars.valueAt(i);
             if (ThisChar.Category == ShowCategory)
               {
-                CharList.add(new CharItem(CharCode, ThisChar));
+                MainCharList.add(new CharItem(CharCode, ThisChar));
               } /*if*/
           } /*for*/
-        CharList.notifyDataSetChanged();
-      } /*RebuildCharList*/
+        MainCharList.notifyDataSetChanged();
+      } /*RebuildMainCharList*/
+
+    private void ShowCharDetails
+      (
+        CharItem TheChar
+      )
+      {
+        ((TextView)findViewById(R.id.details)).setText
+          (
+            String.format
+              (
+                java.util.Locale.US,
+                "%s “%s” %s",
+                FormatCharCode(TheChar.CharCode),
+                CharToString(TheChar.CharCode),
+                TheChar.Info.Name
+              )
+          );
+        ((TextView)findViewById(R.id.category)).setText
+          (
+            Unicode.CategoryNames.get(TheChar.Info.Category)
+          );
+        OtherNamesList.clear();
+        for (String Name : TheChar.Info.OtherNames)
+          {
+            OtherNamesList.add(Name);
+          } /*for*/
+        OtherNamesList.notifyDataSetChanged();
+        LikeCharList.clear();
+        for (int Code : TheChar.Info.LikeChars)
+          {
+            LikeCharList.add(new CharItem(Code, Unicode.Chars.get(Code)));
+          } /*for*/
+        LikeCharList.notifyDataSetChanged();
+      } /*ShowCharDetails*/
 
     @Override
     public void onCreate
@@ -199,8 +251,9 @@ public class Main extends android.app.Activity
         setContentView(R.layout.main);
           {
             int Selected = 0;
-            final android.widget.Spinner CategoryListView = (android.widget.Spinner)findViewById(R.id.show_selector);
-            CategoryList = new CategoryItemAdapter(getLayoutInflater());
+            final android.widget.Spinner CategoryListView =
+                (android.widget.Spinner)findViewById(R.id.show_selector);
+            CategoryList = new CategoryItemAdapter();
             for (int i = 0; i < Unicode.CategoryNames.size(); ++i)
               {
                 final int CategoryCode = Unicode.CategoryNames.keyAt(i);
@@ -208,16 +261,30 @@ public class Main extends android.app.Activity
                   {
                     Selected = CategoryList.getCount();
                   } /*if*/
-                CategoryList.add(new CategoryItem(CategoryCode, Unicode.CategoryNames.get(CategoryCode)));
+                CategoryList.add
+                  (
+                    new CategoryItem(CategoryCode, Unicode.CategoryNames.valueAt(i))
+                  );
               } /*for*/
             CategoryListView.setAdapter(CategoryList);
             CategoryListView.setOnItemSelectedListener(new CategorySelect());
             CategoryListView.setSelection(Selected);
           }
-        CharList = new CharItemAdapter(R.layout.main_list_item, getLayoutInflater());
-        CharListView = (android.widget.ListView)findViewById(R.id.list);
-        CharListView.setAdapter(CharList);
-        RebuildCharList();
+          {
+            final ListView CharListView = (ListView)findViewById(R.id.main_list);
+            MainCharList = new CharItemAdapter();
+            CharListView.setAdapter(MainCharList);
+            CharListView.setOnItemClickListener(new CharSelect());
+          }
+        OtherNamesList = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1);
+        ((ListView)findViewById(R.id.names_list)).setAdapter(OtherNamesList);
+          {
+            final ListView CharListView = (ListView)findViewById(R.id.like_list);
+            LikeCharList = new CharItemAdapter();
+            CharListView.setAdapter(LikeCharList);
+            CharListView.setOnItemClickListener(new CharSelect());
+          }
+        RebuildMainCharList();
       } /*onCreate*/
 
   } /*Main*/;
