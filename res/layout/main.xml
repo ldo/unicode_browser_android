@@ -24,13 +24,14 @@
     <ListView
         android:id="@+id/main_list"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_weight="100"
+        android:layout_height="200dp"
+        android:layout_weight="50"
     />
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="200dp"
         android:orientation="vertical"
+        android:layout_weight="50"
     >
         <TextView
             android:id="@+id/details"
