@@ -1,5 +1,9 @@
 package nz.gen.geek_central.unicode_selector;
 
+import android.view.View;
+import android.view.LayoutInflater;
+import android.widget.TextView;
+import android.widget.AdapterView;
 public class Main extends android.app.Activity
   {
 
@@ -31,13 +35,13 @@ public class Main extends android.app.Activity
 
       } /*CategoryItem*/;
 
-    class CategorySelect implements android.widget.AdapterView.OnItemSelectedListener
+    class CategorySelect implements AdapterView.OnItemSelectedListener
       {
 
         public void onItemSelected
           (
-            android.widget.AdapterView<?> Parent,
-            android.view.View ItemView,
+            AdapterView<?> Parent,
+            View ItemView,
             int Position,
             long ID
           )
@@ -48,7 +52,7 @@ public class Main extends android.app.Activity
 
         public void onNothingSelected
           (
-            android.widget.AdapterView<?> Parent
+            AdapterView<?> Parent
           )
           {
           /* can't think of anything to do */
@@ -59,11 +63,11 @@ public class Main extends android.app.Activity
     class CategoryItemAdapter extends android.widget.ArrayAdapter<CategoryItem>
       {
         static final int ResID = android.R.layout.simple_dropdown_item_1line;
-        final android.view.LayoutInflater TemplateInflater;
+        final LayoutInflater TemplateInflater;
 
         public CategoryItemAdapter
           (
-            android.view.LayoutInflater TemplateInflater
+            LayoutInflater TemplateInflater
           )
           {
             super(Main.this, ResID);
@@ -71,20 +75,20 @@ public class Main extends android.app.Activity
           } /*CategoryItemAdapter*/
 
         @Override
-        public android.view.View getView
+        public View getView
           (
             int Position,
-            android.view.View ReuseView,
+            View ReuseView,
             android.view.ViewGroup Parent
           )
           {
-            android.view.View TheView = ReuseView;
+            View TheView = ReuseView;
             if (TheView == null)
               {
                 TheView = TemplateInflater.inflate(ResID, null);
               } /*if*/
             final CategoryItem ThisItem = getItem(Position);
-            ((android.widget.TextView)TheView.findViewById(android.R.id.text1)).setText
+            ((TextView)TheView.findViewById(android.R.id.text1)).setText
               (
                 ThisItem.Name
               );
@@ -114,12 +118,12 @@ public class Main extends android.app.Activity
     class CharItemAdapter extends android.widget.ArrayAdapter<CharItem>
       {
         final int ResID;
-        final android.view.LayoutInflater TemplateInflater;
+        final LayoutInflater TemplateInflater;
 
         CharItemAdapter
           (
             int ResID,
-            android.view.LayoutInflater TemplateInflater
+            LayoutInflater TemplateInflater
           )
           {
             super(Main.this, ResID);
@@ -128,24 +132,24 @@ public class Main extends android.app.Activity
           } /*CharItemAdapter*/
 
         @Override
-        public android.view.View getView
+        public View getView
           (
             int Position,
-            android.view.View ReuseView,
+            View ReuseView,
             android.view.ViewGroup Parent
           )
           {
-            android.view.View TheView = ReuseView;
+            View TheView = ReuseView;
             if (TheView == null)
               {
                 TheView = TemplateInflater.inflate(ResID, null);
               } /*if*/
             final CharItem ThisItem = getItem(Position);
-            ((android.widget.TextView)TheView.findViewById(R.id.code)).setText
+            ((TextView)TheView.findViewById(R.id.code)).setText
               (
                 String.format("U+%04X", ThisItem.CharCode)
               );
-            ((android.widget.TextView)TheView.findViewById(R.id.literal)).setText
+            ((TextView)TheView.findViewById(R.id.literal)).setText
               (
                 new String
                   (
@@ -159,7 +163,7 @@ public class Main extends android.app.Activity
                         new char[] {(char)ThisItem.CharCode}
                   )
               );
-            ((android.widget.TextView)TheView.findViewById(R.id.name)).setText
+            ((TextView)TheView.findViewById(R.id.name)).setText
               (
                 ThisItem.Info.Name
               );
