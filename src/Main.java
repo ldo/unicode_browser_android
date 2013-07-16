@@ -249,7 +249,11 @@ public class Main extends android.app.Activity
           );
         DetailCategoryButton.setText
           (
-            Unicode.CategoryNames.get(TheChar.Info.Category)
+            String.format
+              (
+                getString(R.string.show_button_format),
+                Unicode.CategoryNames.get(TheChar.Info.Category)
+              )
           );
         DetailCategory = TheChar.Info.Category;
         OtherNamesList.clear();

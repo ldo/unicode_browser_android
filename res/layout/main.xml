@@ -19,6 +19,7 @@
             android:id="@+id/show_selector"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            style="@style/spinner_common"
         />
     </LinearLayout>
     <ListView
@@ -45,7 +46,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text=""
-            style="@style/text_common"
+            style="@style/button_common"
         />
         <TextView
             android:layout_width="wrap_content"
