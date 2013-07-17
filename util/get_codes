@@ -221,7 +221,12 @@ while True :
     out.write("                    /*Category =*/ %d, /* %s */\n" % (category_codes[thischar["category"]], thischar["category"]))
     out.write("                    /*Name =*/ \"%s\",\n" % thischar["name"])
     out.write("                    /*OtherNames =*/ new String[] {%s},\n" % ", ".join("\"%s\"" % s.replace("\\", "\\\\") for s in thischar["other_names"]))
-    out.write("                    /*LikeChars =*/ new int[] {%s}\n" % ", ".join("%#x" % i for i in thischar["similar"]))
+    out.write \
+      (
+            "                    /*LikeChars =*/ new int[] {%s}\n"
+        %
+            ", ".join("%#x" % c for c in thischar["similar"] if c in chars)
+      )
     out.write("                  )\n")
     out.write("              );\n")
 #end for
