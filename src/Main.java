@@ -14,6 +14,7 @@ public class Main extends android.app.Activity
     private int ShowCategory = Unicode.CategoryCodes.get("Lowercase Latin alphabet");
     private CharItemAdapter MainCharList, LikeCharList;
     private ArrayAdapter<String> OtherNamesList;
+    private TextView DetailCategoryDisplay;
     private android.widget.Button DetailCategoryButton;
     private int DetailCategory = -1;
 
@@ -40,6 +41,17 @@ public class Main extends android.app.Activity
 
       } /*CategoryItem*/;
 
+    private void SetShowDetailCategory()
+      {
+        DetailCategoryButton.setVisibility
+          (
+            DetailCategory < 0 || ShowCategory == DetailCategory ?
+                View.INVISIBLE
+            :
+                View.VISIBLE
+          );
+      } /*SetShowDetailCategory*/
+
     private void SetShowingCategory
       (
         int NewCategory
@@ -59,6 +71,7 @@ public class Main extends android.app.Activity
               } /*for*/
             CategoryListView.setSelection(Selected);
           }
+        SetShowDetailCategory();
         RebuildMainCharList();
       } /*SetShowingCategory*/
 
@@ -284,14 +297,7 @@ public class Main extends android.app.Activity
                 TheChar.Info.Name
               )
           );
-        DetailCategoryButton.setText
-          (
-            String.format
-              (
-                getString(R.string.show_button_format),
-                Unicode.CategoryNames.get(TheChar.Info.Category)
-              )
-          );
+        DetailCategoryDisplay.setText(Unicode.CategoryNames.get(TheChar.Info.Category));
         DetailCategory = TheChar.Info.Category;
         OtherNamesList.clear();
         for (String Name : TheChar.Info.OtherNames)
@@ -305,6 +311,7 @@ public class Main extends android.app.Activity
             LikeCharList.add(new CharItem(Code, Unicode.Chars.get(Code)));
           } /*for*/
         LikeCharList.notifyDataSetChanged();
+        SetShowDetailCategory();
       } /*ShowCharDetails*/
 
     @Override
@@ -349,7 +356,8 @@ public class Main extends android.app.Activity
             CharListView.setAdapter(LikeCharList);
             CharListView.setOnItemClickListener(new CharSelect());
           }
-        DetailCategoryButton = (android.widget.Button)findViewById(R.id.category);
+        DetailCategoryDisplay = (TextView)findViewById(R.id.category);
+        DetailCategoryButton = (android.widget.Button)findViewById(R.id.show_category);
         DetailCategoryButton.setOnClickListener
           (
             new View.OnClickListener()
