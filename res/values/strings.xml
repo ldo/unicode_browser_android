@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Unicode Selector</string>
+    <string name="app_name">Unicode Browser</string>
 
     <string name="category_prompt">Category:</string>
     <string name="show">Show</string>

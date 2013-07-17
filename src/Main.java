@@ -1,4 +1,4 @@
-package nz.gen.geek_central.unicode_selector;
+package nz.gen.geek_central.unicode_browser;
 
 import android.view.View;
 import android.view.LayoutInflater;
