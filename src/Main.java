@@ -273,14 +273,14 @@ public class Main extends android.app.Activity
         CharItem TheChar
       )
       {
+        ((TextView)findViewById(R.id.big_literal)).setText(CharToString(TheChar.CharCode));
         ((TextView)findViewById(R.id.details)).setText
           (
             String.format
               (
                 java.util.Locale.US,
-                "%s “%s” %s",
+                "%s %s",
                 FormatCharCode(TheChar.CharCode),
-                CharToString(TheChar.CharCode),
                 TheChar.Info.Name
               )
           );
