@@ -50,7 +50,7 @@ with open(file = data_file, errors = "ignore") as data :
                 #end if
             #end if
         #end if
-        if (eof or nextcharcode != None) and charcode != None :
+        if (eof or nextcharcode != None or line.startswith("@")) and charcode != None :
             include_it = True
             if charname.startswith("<") :
                 if len(samechar) != 0 :
