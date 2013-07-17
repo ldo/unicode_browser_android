@@ -1,25 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="horizontal"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="horizontal"
 >
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         style="@style/text_common"
-        android:text="@string/aka"
+        android:text="→"
     />
     <TextView
+        android:id="@+id/code"
+        android:layout_width="80dp"
+        android:layout_height="wrap_content"
+        style="@style/text_common"
+    />
+    <TextView
+        android:id="@+id/literal"
+        android:layout_width="20dp"
+        android:layout_height="wrap_content"
+        style="@style/text_common"
+    />
+    <TextView
+        android:id="@+id/name"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         style="@style/text_common"
-        android:text=" "
-    />
-    <TextView
-        android:id="@+id/text1"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        style="@style/text_common"
+        android:singleLine="true"
     />
 </LinearLayout>

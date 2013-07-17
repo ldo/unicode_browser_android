@@ -169,12 +169,16 @@ public class Main extends android.app.Activity
 
     class CharItemAdapter extends ArrayAdapter<CharItem>
       {
-        static final int ResID = R.layout.char_list_item;
+        final int ResID;
         final LayoutInflater TemplateInflater = Main.this.getLayoutInflater();
 
-        CharItemAdapter()
+        CharItemAdapter
+          (
+            int ResID
+          )
           {
             super(Main.this, ResID);
+            this.ResID = ResID;
           } /*CharItemAdapter*/
 
         @Override
@@ -199,6 +203,39 @@ public class Main extends android.app.Activity
           } /*getView*/
 
       } /*CharItemAdapter*/;
+
+    class NameItemAdapter extends ArrayAdapter<String>
+      {
+        static final int ResID = R.layout.name_list_item;
+        final LayoutInflater TemplateInflater = Main.this.getLayoutInflater();
+
+        NameItemAdapter()
+          {
+            super(Main.this, ResID);
+          } /*NameItemAdapter*/
+
+        @Override
+        public View getView
+          (
+            int Position,
+            View ReuseView,
+            android.view.ViewGroup Parent
+          )
+          {
+            View TheView = ReuseView;
+            if (TheView == null)
+              {
+                TheView = TemplateInflater.inflate(ResID, null);
+              } /*if*/
+            ((TextView)TheView.findViewById(R.id.text1)).setText
+              (
+                getItem(Position)
+              );
+            return
+                TheView;
+          } /*getView*/
+
+      } /*NameItemAdapter*/;
 
     class CharSelect implements AdapterView.OnItemClickListener
       {
@@ -300,15 +337,15 @@ public class Main extends android.app.Activity
           }
           {
             final ListView CharListView = (ListView)findViewById(R.id.main_list);
-            MainCharList = new CharItemAdapter();
+            MainCharList = new CharItemAdapter(R.layout.char_list_item);
             CharListView.setAdapter(MainCharList);
             CharListView.setOnItemClickListener(new CharSelect());
           }
-        OtherNamesList = new ArrayAdapter<String>(this, R.layout.name_list_item);
+        OtherNamesList = new NameItemAdapter();
         ((ListView)findViewById(R.id.names_list)).setAdapter(OtherNamesList);
           {
             final ListView CharListView = (ListView)findViewById(R.id.like_list);
-            LikeCharList = new CharItemAdapter();
+            LikeCharList = new CharItemAdapter(R.layout.also_char_list_item);
             CharListView.setAdapter(LikeCharList);
             CharListView.setOnItemClickListener(new CharSelect());
           }
