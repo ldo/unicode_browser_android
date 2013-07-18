@@ -8,33 +8,34 @@ import android.widget.AdapterView;
 import android.widget.ListView;
 public class Main extends android.app.Activity
   {
+    private TableReader.Unicode Unicode;
 
     static class CharInfo
       {
         public final int Code;
-        public final int Category; /* index into CategoryNames table */
         public final String Name;
+        public final int Category; /* index into CategoryNames table */
         public final String[] OtherNames;
         public final int[] LikeChars; /* codes for other similar chars */
 
         public CharInfo
           (
             int Code,
-            int Category,
             String Name,
+            int Category,
             String[] OtherNames,
             int[] LikeChars
           )
           {
             this.Code = Code;
-            this.Category = Category;
             this.Name = Name.intern();
+            this.Category = Category;
             this.OtherNames = OtherNames;
             this.LikeChars = LikeChars;
           } /*CharInfo*/
       } /*CharInfo*/;
 
-    static CharInfo GetChar
+    CharInfo GetChar
       (
         int CharIndex
       )
@@ -43,46 +44,18 @@ public class Main extends android.app.Activity
             new CharInfo
               (
                 /*Code =*/ Unicode.GetCharCode(CharIndex),
-                /*Category =*/ Unicode.GetCharCategory(CharIndex),
                 /*Name =*/ Unicode.GetCharName(CharIndex),
+                /*Category =*/ Unicode.GetCharCategory(CharIndex),
                 /*OtherNames =*/ Unicode.GetCharOtherNames(CharIndex),
                 /*LikeChars =*/ Unicode.GetCharLikeChars(CharIndex)
               );
       } /*GetChar*/
 
-    private final static java.util.Map<String, Integer> CategoryCodes =
-        new java.util.HashMap<String, Integer>(Unicode.NrCharCategories);
-    static
-      {
-        for (int i = 0; i < Unicode.NrCharCategories; ++i)
-          {
-            CategoryCodes.put(Unicode.GetCategoryName(i), i);
-          } /*for*/
-      } /*static*/;
-    private final static android.util.SparseArray<CharInfo> Chars =
-        new android.util.SparseArray<CharInfo>(Unicode.NrChars);
-    static
-      {
-        if (false) { /* debug--disable for speed testing */
-        for (int i = 0; i < Unicode.CharRuns.length; ++i)
-          {
-            final Unicode.CharRun ThisRun = Unicode.CharRuns[i];
-            for
-              (
-                int j = ThisRun.StartCode, k = ThisRun.StartIndex;
-                j <= ThisRun.EndCode;
-                ++j, ++k
-              )
-              {
-                Chars.put(j, GetChar(k));
-              } /*for*/
-          } /*for*/
-        } /* debug */
-      } /*static*/;
+    private java.util.Map<String, Integer> CategoryCodes;
 
     private android.widget.Spinner CategoryListView;
     private CategoryItemAdapter CategoryList;
-    private int ShowCategory = CategoryCodes.get("Lowercase Latin alphabet");
+    private int ShowCategory;
     private CharItemAdapter MainCharList, LikeCharList;
     private ArrayAdapter<String> OtherNamesList;
     private TextView DetailCategoryDisplay;
@@ -128,6 +101,7 @@ public class Main extends android.app.Activity
         int NewCategory
       )
       {
+        ShowCategory = NewCategory;
         CategoryListView.setSelection(ShowCategory);
         SetShowDetailCategory();
         RebuildMainCharList();
@@ -310,12 +284,11 @@ public class Main extends android.app.Activity
     private void RebuildMainCharList()
       {
         MainCharList.clear();
-        for (int i = 0; i < Chars.size(); ++i)
+        for (int i = 0; i < Unicode.NrChars; ++i)
           {
-            final CharInfo ThisChar = Chars.valueAt(i);
-            if (ThisChar.Category == ShowCategory)
+            if (Unicode.GetCharCategory(i) == ShowCategory)
               {
-                MainCharList.add(ThisChar);
+                MainCharList.add(GetChar(i));
               } /*if*/
           } /*for*/
         MainCharList.notifyDataSetChanged();
@@ -348,7 +321,7 @@ public class Main extends android.app.Activity
         LikeCharList.clear();
         for (int Code : TheChar.LikeChars)
           {
-            LikeCharList.add(Chars.get(Code));
+            LikeCharList.add(GetChar(Unicode.GetCharIndex(Code)));
           } /*for*/
         LikeCharList.notifyDataSetChanged();
         SetShowDetailCategory();
@@ -360,8 +333,15 @@ public class Main extends android.app.Activity
         android.os.Bundle ToRestore
       )
       {
+        Unicode = TableReader.Load(this);
+        CategoryCodes = new java.util.HashMap<String, Integer>(Unicode.NrCharCategories);
+        for (int i = 0; i < Unicode.NrCharCategories; ++i)
+          {
+            CategoryCodes.put(Unicode.GetCategoryName(i), i);
+          } /*for*/
         super.onCreate(ToRestore);
         setContentView(R.layout.main);
+        ShowCategory = CategoryCodes.get("Lowercase Latin alphabet"); /* default */
           {
             CategoryListView = (android.widget.Spinner)findViewById(R.id.show_selector);
             CategoryList = new CategoryItemAdapter();
