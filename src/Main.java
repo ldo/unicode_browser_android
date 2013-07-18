@@ -9,9 +9,80 @@ import android.widget.ListView;
 public class Main extends android.app.Activity
   {
 
+    static class CharInfo
+      {
+        public final int Code;
+        public final int Category; /* index into CategoryNames table */
+        public final String Name;
+        public final String[] OtherNames;
+        public final int[] LikeChars; /* codes for other similar chars */
+
+        public CharInfo
+          (
+            int Code,
+            int Category,
+            String Name,
+            String[] OtherNames,
+            int[] LikeChars
+          )
+          {
+            this.Code = Code;
+            this.Category = Category;
+            this.Name = Name.intern();
+            this.OtherNames = OtherNames;
+            this.LikeChars = LikeChars;
+          } /*CharInfo*/
+      } /*CharInfo*/;
+
+    static CharInfo GetChar
+      (
+        int CharIndex
+      )
+      {
+        return
+            new CharInfo
+              (
+                /*Code =*/ Unicode.GetCharCode(CharIndex),
+                /*Category =*/ Unicode.GetCharCategory(CharIndex),
+                /*Name =*/ Unicode.GetCharName(CharIndex),
+                /*OtherNames =*/ Unicode.GetCharOtherNames(CharIndex),
+                /*LikeChars =*/ Unicode.GetCharLikeChars(CharIndex)
+              );
+      } /*GetChar*/
+
+    private final static java.util.Map<String, Integer> CategoryCodes =
+        new java.util.HashMap<String, Integer>(Unicode.NrCharCategories);
+    static
+      {
+        for (int i = 0; i < Unicode.NrCharCategories; ++i)
+          {
+            CategoryCodes.put(Unicode.GetCategoryName(i), i);
+          } /*for*/
+      } /*static*/;
+    private final static android.util.SparseArray<CharInfo> Chars =
+        new android.util.SparseArray<CharInfo>(Unicode.NrChars);
+    static
+      {
+        if (false) { /* debug--disable for speed testing */
+        for (int i = 0; i < Unicode.CharRuns.length; ++i)
+          {
+            final Unicode.CharRun ThisRun = Unicode.CharRuns[i];
+            for
+              (
+                int j = ThisRun.StartCode, k = ThisRun.StartIndex;
+                j <= ThisRun.EndCode;
+                ++j, ++k
+              )
+              {
+                Chars.put(j, GetChar(k));
+              } /*for*/
+          } /*for*/
+        } /* debug */
+      } /*static*/;
+
     private android.widget.Spinner CategoryListView;
     private CategoryItemAdapter CategoryList;
-    private int ShowCategory = Unicode.CategoryCodes.get("Lowercase Latin alphabet");
+    private int ShowCategory = CategoryCodes.get("Lowercase Latin alphabet");
     private CharItemAdapter MainCharList, LikeCharList;
     private ArrayAdapter<String> OtherNamesList;
     private TextView DetailCategoryDisplay;
@@ -57,20 +128,7 @@ public class Main extends android.app.Activity
         int NewCategory
       )
       {
-        ShowCategory = NewCategory;
-          {
-            int Selected;
-            for (int i = 0;;)
-              {
-                if (Unicode.CategoryNames.keyAt(i) == ShowCategory)
-                  {
-                    Selected = i;
-                    break;
-                  } /*if*/
-                ++i;
-              } /*for*/
-            CategoryListView.setSelection(Selected);
-          }
+        CategoryListView.setSelection(ShowCategory);
         SetShowDetailCategory();
         RebuildMainCharList();
       } /*SetShowingCategory*/
@@ -133,23 +191,6 @@ public class Main extends android.app.Activity
 
       } /*CategoryItemAdapter*/;
 
-    static class CharItem
-      {
-        public final int CharCode;
-        public final Unicode.CharInfo Info;
-
-        public CharItem
-          (
-            int CharCode,
-            Unicode.CharInfo Info
-          )
-          {
-            this.CharCode = CharCode;
-            this.Info = Info;
-          } /*CharItem*/
-
-      } /*CharItem*/;
-
     public static String FormatCharCode
       (
         int Code
@@ -180,7 +221,7 @@ public class Main extends android.app.Activity
               );
       } /*CharToString*/
 
-    class CharItemAdapter extends ArrayAdapter<CharItem>
+    class CharItemAdapter extends ArrayAdapter<CharInfo>
       {
         final int ResID;
         final LayoutInflater TemplateInflater = Main.this.getLayoutInflater();
@@ -207,10 +248,10 @@ public class Main extends android.app.Activity
               {
                 TheView = TemplateInflater.inflate(ResID, null);
               } /*if*/
-            final CharItem ThisItem = getItem(Position);
-            ((TextView)TheView.findViewById(R.id.code)).setText(FormatCharCode(ThisItem.CharCode));
-            ((TextView)TheView.findViewById(R.id.literal)).setText(CharToString(ThisItem.CharCode));
-            ((TextView)TheView.findViewById(R.id.name)).setText(ThisItem.Info.Name);
+            final CharInfo ThisItem = getItem(Position);
+            ((TextView)TheView.findViewById(R.id.code)).setText(FormatCharCode(ThisItem.Code));
+            ((TextView)TheView.findViewById(R.id.literal)).setText(CharToString(ThisItem.Code));
+            ((TextView)TheView.findViewById(R.id.name)).setText(ThisItem.Name);
             return
                 TheView;
           } /*getView*/
@@ -261,7 +302,7 @@ public class Main extends android.app.Activity
             long ID
           )
           {
-            ShowCharDetails((CharItem)Parent.getAdapter().getItem(Position));
+            ShowCharDetails((CharInfo)Parent.getAdapter().getItem(Position));
           } /*onItemClick*/
 
       } /*CharSelect*/;
@@ -269,13 +310,12 @@ public class Main extends android.app.Activity
     private void RebuildMainCharList()
       {
         MainCharList.clear();
-        for (int i = 0; i < Unicode.Chars.size(); ++i)
+        for (int i = 0; i < Chars.size(); ++i)
           {
-            final int CharCode = Unicode.Chars.keyAt(i);
-            final Unicode.CharInfo ThisChar = Unicode.Chars.valueAt(i);
+            final CharInfo ThisChar = Chars.valueAt(i);
             if (ThisChar.Category == ShowCategory)
               {
-                MainCharList.add(new CharItem(CharCode, ThisChar));
+                MainCharList.add(ThisChar);
               } /*if*/
           } /*for*/
         MainCharList.notifyDataSetChanged();
@@ -283,32 +323,32 @@ public class Main extends android.app.Activity
 
     private void ShowCharDetails
       (
-        CharItem TheChar
+        CharInfo TheChar
       )
       {
-        ((TextView)findViewById(R.id.big_literal)).setText(CharToString(TheChar.CharCode));
+        ((TextView)findViewById(R.id.big_literal)).setText(CharToString(TheChar.Code));
         ((TextView)findViewById(R.id.details)).setText
           (
             String.format
               (
                 java.util.Locale.US,
                 "%s %s",
-                FormatCharCode(TheChar.CharCode),
-                TheChar.Info.Name
+                FormatCharCode(TheChar.Code),
+                TheChar.Name
               )
           );
-        DetailCategoryDisplay.setText(Unicode.CategoryNames.get(TheChar.Info.Category));
-        DetailCategory = TheChar.Info.Category;
+        DetailCategoryDisplay.setText(Unicode.GetCategoryName(TheChar.Category));
+        DetailCategory = TheChar.Category;
         OtherNamesList.clear();
-        for (String Name : TheChar.Info.OtherNames)
+        for (String Name : TheChar.OtherNames)
           {
             OtherNamesList.add(Name);
           } /*for*/
         OtherNamesList.notifyDataSetChanged();
         LikeCharList.clear();
-        for (int Code : TheChar.Info.LikeChars)
+        for (int Code : TheChar.LikeChars)
           {
-            LikeCharList.add(new CharItem(Code, Unicode.Chars.get(Code)));
+            LikeCharList.add(Chars.get(Code));
           } /*for*/
         LikeCharList.notifyDataSetChanged();
         SetShowDetailCategory();
@@ -323,24 +363,18 @@ public class Main extends android.app.Activity
         super.onCreate(ToRestore);
         setContentView(R.layout.main);
           {
-            int Selected = 0;
             CategoryListView = (android.widget.Spinner)findViewById(R.id.show_selector);
             CategoryList = new CategoryItemAdapter();
-            for (int i = 0; i < Unicode.CategoryNames.size(); ++i)
+            for (int CategoryCode = 0; CategoryCode < Unicode.NrCharCategories; ++CategoryCode)
               {
-                final int CategoryCode = Unicode.CategoryNames.keyAt(i);
-                if (CategoryCode == ShowCategory)
-                  {
-                    Selected = CategoryList.getCount();
-                  } /*if*/
                 CategoryList.add
                   (
-                    new CategoryItem(CategoryCode, Unicode.CategoryNames.valueAt(i))
+                    new CategoryItem(CategoryCode, Unicode.GetCategoryName(CategoryCode))
                   );
               } /*for*/
             CategoryListView.setAdapter(CategoryList);
             CategoryListView.setOnItemSelectedListener(new CategorySelect());
-            CategoryListView.setSelection(Selected);
+            CategoryListView.setSelection(ShowCategory);
           }
           {
             final ListView CharListView = (ListView)findViewById(R.id.main_list);

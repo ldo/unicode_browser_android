@@ -119,6 +119,7 @@ with open(file = data_file, errors = "ignore") as data :
         #end if
     #end while
 #end with
+
 category_codes = {}
 for i, name in enumerate(categories) :
     category_codes[name] = i
@@ -138,106 +139,395 @@ out.write \
     %
         version
   )
-out.write("import java.util.HashMap;\n")
-out.write("import android.util.SparseArray;\n")
 out.write("public class Unicode\n")
 out.write("  {\n")
 out.write("    public static final String Version = \"%s\";\n" % version)
+out.write("    public static final int NrChars = %d;\n" % len(chars))
+out.write("    public static final int NrCharCategories = %d;\n" % len(categories))
+out.write("\n")
+
+def encode_counted(s) :
+    if len(s) > 127 :
+        raise AssertionError("string %s too long to encode" % repr(s))
+    #end if
+    result = [len(s)]
+    for c in s :
+        c = ord(c)
+        if c > 127 :
+            raise AssertionError("character %d out of 7-bit range" % c)
+        #end if
+        result.append(c)
+    #end for
+    return \
+        result
+#end encode_counted
+
+entries_per_char = 5 # nr entries in flattened CharTable per character
+maxseglen = 8000 # as close as I can get to some safe upper limit
+
+segcount = 0
+def write_elts(name, elttype, data, segmented) :
+    # writes out a list of data elements as a Java array with the specified
+    # name and element type. segmented indicates the array is too large for
+    # the Java compiler to handle, so it is broken into segments which are
+    # then put into a two-dimensional array.
+    global segcount
+    max_per_line = (32, 4)[elttype == "String"] # reasonable number of array items to put on one source line
+    format = ("%d", "\"%s\"")[elttype == "String"]
+    if segmented :
+        segnames = []
+        i = 0
+        curlinelen = None
+        curseglen = None
+        while True :
+            if (
+                    i == len(data)
+                or
+                    curseglen != None and curseglen == maxseglen
+                or
+                    curlinelen != None and curlinelen == max_per_line
+            ) :
+                if curlinelen != None :
+                    out.write("\n")
+                    curlinelen = None
+                #end if
+                if curseglen != None :
+                    if i == len(data) or curseglen == maxseglen :
+                        out.write("          };\n")
+                        out.write("     } /*%s*/;\n" % segname)
+                        curseglen = None
+                    #end if
+                #end if
+                if i == len(data) :
+                    break
+            #end if
+            if curseglen == None :
+                segcount += 1
+                segname = "DataSeg%d" % segcount
+                segnames.append(segname)
+                out.write("\n")
+                out.write \
+                  (
+                        "    private static class %(segname)s\n"
+                        "      {\n"
+                        "        public static final %(elttype)s[] Data =\n"
+                        "          {\n"
+                    %
+                        {
+                            "segname" : segname,
+                            "elttype" : elttype,
+                        }
+                  )
+                curseglen = 0
+            #end if
+            if curlinelen == None :
+                out.write("           ")
+                curlinelen = 0
+            #end if
+            out.write(" " + format % data[i] + ",")
+            curlinelen += 1
+            curseglen += 1
+            i += 1
+        #end while
+    #end if
+    out.write("\n")
+    out.write \
+      (
+            "    private static final %(elttype)s%(extradim)s[] %(name)s =\n"
+            "        {\n"
+        %
+            {
+                "elttype" : elttype,
+                "name" : name,
+                "extradim" : ("", "[]")[segmented],
+            }
+      )
+    if segmented :
+        out.write \
+          (
+            "".join
+              (
+                "            %s.Data,\n" % segname
+                for segname in segnames
+              )
+          )
+    else :
+        i = 0
+        curlinelen = None
+        while True :
+            if i == len(data) or curlinelen != None and curlinelen == max_per_line :
+                if curlinelen != None :
+                    out.write("\n")
+                    curlinelen = None
+                #end if
+                if i == len(data) :
+                    break
+            #end if
+            if curlinelen == None :
+                out.write("           ")
+                curlinelen = 0
+            #end if
+            out.write(" %d," % data[i])
+            curlinelen += 1
+            i += 1
+        #end while
+    #end if
+    out.write("        };\n")
+#end write_elts
+
+out.write \
+  (
+    "    public static class CharRun\n"
+    "      {\n"
+    "        public final int StartCode, EndCode, StartIndex;\n"
+    "\n"
+    "        public CharRun\n"
+    "          (\n"
+    "            int StartCode,\n"
+    "            int EndCode,\n"
+    "            int StartIndex\n"
+    "          )\n"
+    "          {\n"
+    "            this.StartCode = StartCode;\n"
+    "            this.EndCode = EndCode;\n"
+    "            this.StartIndex = StartIndex;\n"
+    "          } /*CharRun*/\n"
+    "\n"
+    "      } /*CharRun*/;\n"
+  )
 out.write("\n")
 out.write \
   (
-    "    public static class CharInfo\n"
-    "      {\n"
-    "        public final int Category; /* map to name in CategoryNames table */\n"
-    "        public final String Name;\n"
-    "        public final String[] OtherNames;\n"
-    "        public final int[] LikeChars; /* codes for other similar chars */\n"
-    "\n"
-    "        public CharInfo\n"
-    "          (\n"
-    "            int Category,\n"
-    "            String Name,\n"
-    "            String[] OtherNames,\n"
-    "            int[] LikeChars\n"
-    "          )\n"
-    "          {\n"
-    "            this.Category = Category;\n"
-    "            this.Name = Name.intern();\n"
-    "            this.OtherNames = OtherNames;\n"
-    "            this.LikeChars = LikeChars;\n"
-    "          } /*CharInfo*/\n"
-    "\n"
-    "      } /*CharInfo*/\n"
+    "  /* break out information returned into separate routines that can be invoked\n"
+    "    on demand, to try to improve app startup speed. */\n"
   )
 out.write("\n")
-out.write("    public static final SparseArray<String> CategoryNames = new SparseArray<String>();\n")
-out.write("    public static final HashMap<String, Integer> CategoryCodes = new HashMap<String, Integer>();\n")
-out.write("    static\n")
-out.write("      {\n")
-for name in categories :
-    out.write("        CategoryNames.put(%d, \"%s\");\n" % (category_codes[name], name))
-    out.write("        CategoryCodes.put(\"%s\", %d);\n" % (name, category_codes[name]))
-#end for
-out.write("      } /*static*/\n")
+out.write \
+  (
+    "    public static int CharIndex\n"
+    "      (\n"
+    "        int Code\n"
+    "      )\n"
+    "      /* returns the index into the character tables for the character with the\n"
+    "        specified code. Assumes there is such an entry! */\n"
+    "      {\n"
+    "        int Result;\n"
+    "        for (int i = 0;;)\n"
+    "          {\n"
+    "            final CharRun ThisRun = CharRuns[i];\n"
+    "            if (ThisRun.StartCode <= Code && ThisRun.EndCode >= Code)\n"
+    "              {\n"
+    "                Result = ThisRun.StartIndex + Code - ThisRun.StartCode;\n"
+    "                break;\n"
+    "              } /*if*/\n"
+    "            ++i;\n"
+    "          } /*for*/\n"
+    "        return\n"
+    "            Result;\n"
+    "      } /*CharIndex*/\n"
+  )
 out.write("\n")
-out.write("    public static final HashMap<String, Integer> CharNamesToCodes = new HashMap<String, Integer>();\n")
-out.write("    public static final SparseArray<CharInfo> Chars = new SparseArray<CharInfo>(); /* mapping from character code to info about character */\n")
-# initialization code for the character table has to be split up into multiple method
-# calls to avoid a “code too large” error in the Java compiler, and then these method
-# calls have to be put into separate classes to avoid a “too many constants” error.
-charsiter = iter(chars)
-nrsegs = 0
-curseg = None
-segs = []
-maxseg = 1000
+out.write \
+  (
+        "    public static int GetCharCode\n"
+        "      (\n"
+        "        int CharIndex\n"
+        "      )\n"
+        "      {\n"
+        "        return\n"
+        "            CharTable[CharIndex * %(nrentries)d / %(segsize)d][CharIndex * %(nrentries)d %% %(segsize)d];\n"
+        "      } /*GetChar*/\n"
+    %
+        {
+            "segsize" : maxseglen,
+            "nrentries" : entries_per_char,
+        }
+  )
+out.write("\n")
+out.write \
+  (
+        "    public static int GetCharCategory\n"
+        "      (\n"
+        "        int CharIndex\n"
+        "      )\n"
+        "      {\n"
+        "        return\n"
+        "            CharTable[(CharIndex * %(nrentries)d + 1) / %(segsize)d][(CharIndex * %(nrentries)d + 1) %% %(segsize)d];\n"
+        "      } /*GetCharCategory*/\n"
+    %
+        {
+            "segsize" : maxseglen,
+            "nrentries" : entries_per_char,
+        }
+  )
+out.write("\n")
+out.write \
+  (
+        "    public static String GetCharName\n"
+        "      (\n"
+        "        int CharIndex\n"
+        "      )\n"
+        "      {\n"
+        "        return\n"
+        "            GetName(CharTable[(CharIndex * %(nrentries)d + 2) / %(segsize)d][(CharIndex * %(nrentries)d + 2) %% %(segsize)d]);\n"
+        "      } /*GetCharName*/\n"
+    %
+        {
+            "segsize" : maxseglen,
+            "nrentries" : entries_per_char,
+        }
+  )
+out.write("\n")
+out.write \
+  (
+        "    public static String[] GetCharOtherNames\n"
+        "      (\n"
+        "        int CharIndex\n"
+        "      )\n"
+        "      {\n"
+        "        final int Base = CharIndex * %(nrentries)d;\n"
+        "        final int OtherNamesStart = CharTable[(Base + 3) / %(segsize)d][(Base + 3) %% %(segsize)d];\n"
+        "        final int NrOtherNames = OtherNameStarts[OtherNamesStart];\n"
+        "        final String[] Result = new String[NrOtherNames];\n"
+        "        for (int i = 1; i <= NrOtherNames; ++i)\n"
+        "          {\n"
+        "            Result[i - 1] = GetName(OtherNameStarts[OtherNamesStart + i]);\n"
+        "          } /*for*/\n"
+        "        return\n"
+        "            Result;\n"
+        "      } /*GetCharOtherNames*/\n"
+    %
+        {
+            "segsize" : maxseglen,
+            "nrentries" : entries_per_char,
+        }
+  )
+out.write("\n")
+out.write \
+  (
+        "    public static int[] GetCharLikeChars\n"
+        "      (\n"
+        "        int CharIndex\n"
+        "      )\n"
+        "      {\n"
+        "        final int Base = CharIndex * %(nrentries)d;\n"
+        "        final int LikeCharsStart = CharTable[(Base + 4) / %(segsize)d][(Base + 4) %% %(segsize)d];\n"
+        "        final int NrLikeChars = LikeChars[LikeCharsStart];\n"
+        "        final int[] Result = new int[NrLikeChars];\n"
+        "        for (int i = 1; i <= NrLikeChars; ++i)\n"
+        "          {\n"
+        "            Result[i - 1] = LikeChars[LikeCharsStart + i];\n"
+        "          } /*for*/\n"
+        "        return\n"
+        "            Result;\n"
+        "      } /*GetCharLikeChars*/\n"
+    %
+        {
+            "segsize" : maxseglen,
+            "nrentries" : entries_per_char,
+        }
+  )
+out.write("\n")
+out.write \
+  (
+        "    private static String GetName\n"
+        "      (\n"
+        "        int Offset\n"
+        "      )\n"
+        "      /* returns a copy of the string starting at the specified offset in NameStrings. */\n"
+        "      {\n"
+        "        final int Strlen = NameStrings[Offset / %(segsize)d][Offset %% %(segsize)d];\n"
+        "        final StringBuilder Result = new StringBuilder(Strlen);\n"
+        "        for (int i = 1; i <= Strlen; ++i)\n"
+        "          {\n"
+        "            Result.setCharAt(i - 1, (char)((short)NameStrings[(Offset + i) / %(segsize)d][(Offset + i) %% %(segsize)d] & 255));\n"
+        "          } /*for*/\n"
+        "        return\n"
+        "            Result.toString();\n"
+        "      } /*GetName*/\n"
+    %
+        {
+            "segsize" : maxseglen,
+        }
+  )
+out.write("\n")
+chartable = []
+namestrings = []
+othernamestarts = []
+likechars = []
+categorynamestarts = []
+for category in categories :
+    categorynamestarts.append(len(namestrings))
+    namestrings.extend(encode_counted(category))
+#end for
+out.write \
+  (
+    "    public static String GetCategoryName\n"
+    "      (\n"
+    "        int CategoryCode\n"
+    "      )\n"
+    "      {\n"
+    "        return\n"
+    "            GetName(CategoryNameStarts[CategoryCode]);\n"
+    "      } /*GetCategoryName*/\n"
+  )
+write_elts("CategoryNameStarts", "int", categorynamestarts, False)
+for charcode in sorted(chars) :
+    thischar = chars[charcode]
+    chartable.extend \
+      (
+        [
+            charcode,
+            category_codes[thischar["category"]],
+            len(namestrings), # start of name string
+            len(othernamestarts), # start of other names
+            len(likechars), # start of like chars
+        ]
+      )
+    namestrings.extend(encode_counted(thischar["name"]))
+    othernamestarts.append(len(thischar["other_names"]))
+    for name in thischar["other_names"] :
+        othernamestarts.append(len(namestrings))
+        namestrings.extend(encode_counted(name))
+    #end for
+    likechars.append(len(thischar["similar"]))
+    for otherchar in thischar["similar"] :
+        likechars.append(otherchar)
+    #end for
+#end for
+sys.stdout.write("len(NameStrings) = %d\n" % len(namestrings)) # debug
+write_elts("CharTable", "int", chartable, True)
+write_elts("NameStrings", "byte", namestrings, True)
+write_elts("OtherNameStarts", "int", othernamestarts, False)
+write_elts("LikeChars", "int", likechars, False)
+out.write("\n")
+out.write("    public static final CharRun[] CharRuns =\n")
+out.write("      {\n")
+charsiter = iter(sorted(chars.keys()))
+prevcharcode = None
+charindex = 0
 while True :
     charcode = next(charsiter, None)
-    if charcode == None or curseg != None and curseglen == maxseg :
-        if curseg != None :
-            out.write("          } /*%s*/\n" % curseg)
-            out.write("      } /*%s*/;\n" % curseg)
-            curseg = None
+    if charcode == None or prevcharcode != None and charcode - prevcharcode != 1 :
+        if prevcharcode != None :
+            out.write \
+              (
+                "        new CharRun(%#0.4x, %#0.4x, %d),\n" % (startcharcode, prevcharcode, startcharindex)
+              )
+            prevcharcode = None
         #end if
+        if charcode == None :
+            break
     #end if
-    if charcode == None :
-        break
-    thischar = chars[charcode]
-    if curseg == None :
-        nrsegs += 1
-        curseg = "CharsInit%d" % nrsegs
-        out.write("    private static class %s\n" % curseg)
-        out.write("      {\n")
-        out.write("        public %s()\n" % curseg)
-        out.write("          {\n")
-        segs.append(curseg)
-        curseglen = 0
+    if prevcharcode == None :
+        startcharcode = charcode
+        prevcharcode = charcode
+        startcharindex = charindex
     #end if
-    out.write("            CharNamesToCodes.put(\"%s\", %#x);\n" % (thischar["name"], charcode))
-    out.write("            Chars.put\n")
-    out.write("              (\n")
-    out.write("                %#x,\n" % charcode)
-    out.write("                new CharInfo\n")
-    out.write("                  (\n")
-    out.write("                    /*Category =*/ %d, /* %s */\n" % (category_codes[thischar["category"]], thischar["category"]))
-    out.write("                    /*Name =*/ \"%s\",\n" % thischar["name"])
-    out.write("                    /*OtherNames =*/ new String[] {%s},\n" % ", ".join("\"%s\"" % s.replace("\\", "\\\\") for s in thischar["other_names"]))
-    out.write \
-      (
-            "                    /*LikeChars =*/ new int[] {%s}\n"
-        %
-            ", ".join("%#x" % c for c in thischar["similar"] if c in chars)
-      )
-    out.write("                  )\n")
-    out.write("              );\n")
-#end for
-    curseglen += 1
+    prevcharcode = charcode
+    charindex += 1
 #end while
-out.write("    static\n")
-out.write("      {\n")
-for seg in segs :
-    out.write("        new %s();\n" % seg)
-#end for
-out.write("      } /*static*/\n")
+out.write("      } /*CharRuns*/;\n")
 out.write("\n")
 out.write("  } /*Unicode*/;\n")
 out.flush()
