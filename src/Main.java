@@ -449,6 +449,7 @@ public class Main extends android.app.Activity
               }
             else
               {
+              /* FIXME: rebuilding entire list can be slow with lots of matches */
                 for (int i = 0; i < Unicode.NrChars; ++i)
                   {
                     if (Unicode.GetCharName(i).toLowerCase().contains(Matching))
