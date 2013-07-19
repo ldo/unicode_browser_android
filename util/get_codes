@@ -198,10 +198,11 @@ class DataWriter :
 data_file = "/usr/share/unicode/NamesList.txt"
 versionstr = "@@@\tThe Unicode Standard "
 out_file = "res/raw/unicode.rtttl"
-  # choose some suitable spurious file extension to disable compression (file is too big to
+  # choose some suitable meaningless file extension to disable compression (file is too big to
   # decompress on pre-Android-2.3)
   # see <http://ponystyle.com/blog/2010/03/26/dealing-with-asset-compression-in-android-apps/>
   # for list of extensions which are not compressed
+hexdigits = r"[0-9A-F]+" # file always has them in uppercase
 
 chars = {}
 categories = []
@@ -225,7 +226,7 @@ with open(file = data_file, errors = "ignore") as data :
         if not eof :
             line = line.rstrip()
             if len(line) != 0 :
-                nextcharcode = re.match(r"[0-9A-F]+", line)
+                nextcharcode = re.match(hexdigits, line)
                 if nextcharcode != None :
                     line = line[nextcharcode.end():]
                 #end if
@@ -280,13 +281,23 @@ with open(file = data_file, errors = "ignore") as data :
             elif line.startswith("x ") :
                 nextpos = 2
                 while True :
-                    nextlikecharcode = re.search(r"[0-9A-F]+", line[nextpos:])
+                    nextlikecharcode = re.search(hexdigits, line[nextpos:])
                     if nextlikecharcode == None :
                         break
                     likecharcode = int(nextlikecharcode.group(), 16)
                     nextpos += nextlikecharcode.end()
                 #end while
                 likechar.add(likecharcode)
+            elif line.startswith("# ") :
+                # showing equivalent to one or more other characters
+                match1 = re.search(hexdigits, line[2:])
+                if match1 != None :
+                    match2 = re.match(" +" + hexdigits, line[match1.end() + 2:])
+                    if match2 == None :
+                        # ignore multi-character equivalent
+                        likechar.add(int(match1.group(), 16))
+                    #end if
+                #end if
             else :
                 pass # sys.stdout.write("Ignore line for U+%04X: %s\n" % (charcode, repr(line)))
             #end if
