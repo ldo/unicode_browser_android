@@ -41,7 +41,7 @@ class DataWriter :
 #        * array [nr character runs] of (start code, end code, start index within character arrays)
 #        * table of alternative names (start offsets within name strings table), each preceded by count
 #        * table of like char codes, each preceded by count
-#        * table of UTF-8-encoded name strings, each preceded by length byte (first string should Unicode version)
+#        * table of name strings (7-bit ASCII only), each preceded by length byte (first string should Unicode version)
 #-
 
     def __init__(self, outfilename, version) :
@@ -62,7 +62,7 @@ class DataWriter :
     #-
 
     def add_string(self, s) :
-        s = s.encode("utf-8")
+        s = s.encode("ascii")
         if len(s) > 127 :
             raise AssertionError("string %s too long to encode" % repr(s))
         #end if

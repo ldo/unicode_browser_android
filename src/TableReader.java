@@ -65,7 +65,7 @@ public class TableReader
             Result.setLength(Strlen);
             for (int i = 1; i <= Strlen; ++i)
               {
-              /* FIXME: should really decode as UTF-8! */
+              /* Characters will be 7-bit ASCII only */
                 Result.setCharAt(i - 1, (char)((short)ContentsBuf.get(NameStringsStart + Offset + i) & 255));
               } /*for*/
             return
