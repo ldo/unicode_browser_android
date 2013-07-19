@@ -1,0 +1,15 @@
+Unicode Browser is an application for Android for browsing Unicode
+characters. You can examine them by category, or by similarity.
+
+Contents:
+    src/ -- Java sources for the Android app
+    res/ -- resources for the Android app
+    util/get_codes -- utility script for building the Unicode table
+    AndroidManifest.xml, build.xml, *.properties -- for driving
+        Google's Android build tools (note that you will have to
+        provide a couple more of these--see INSTALL for details)
+    README -- this file
+    INSTALL -- build/installation instructions
+    COPYING -- licence (GPLv3)
+
+Lawrence D'Oliveiro <ldo@geek-central.gen.nz>
