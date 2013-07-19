@@ -359,7 +359,7 @@ public class Main extends android.app.Activity
           } /*for*/
         super.onCreate(ToRestore);
         setContentView(R.layout.main);
-        ShowCategory = CategoryCodes.get("Lowercase Latin alphabet"); /* default */
+        ShowCategory = CategoryCodes.get("C0 Controls and Basic Latin (Basic Latin)"); /* default */
           {
             CategoryListView = (android.widget.Spinner)findViewById(R.id.show_selector);
             CategoryList = new CategoryItemAdapter();

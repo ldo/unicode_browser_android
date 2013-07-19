@@ -314,10 +314,13 @@ with open(file = data_file, errors = "ignore") as data :
             else :
                 pass # sys.stdout.write("Ignore line for U+%04X: %s\n" % (charcode, repr(line)))
             #end if
-        elif line.startswith("@\t\t") :
-            char_category = line[3:]
-            if char_category not in categories :
-                categories.append(char_category)
+        elif line.startswith("@@\t") :
+            pieces = re.search("^(" + hexdigits + ")\t(.+)\t(" + hexdigits + ")$", line[3:])
+            if pieces != None :
+                char_category = pieces.group(2)
+                if char_category not in categories :
+                    categories.append(char_category)
+                #end if
             #end if
         else :
             pass # sys.stdout.write("Ignore line: %s\n" % repr(line))
