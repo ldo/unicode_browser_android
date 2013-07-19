@@ -49,6 +49,7 @@ class DataWriter :
         self.chars = []
         self.categories = []
         self.namestrings = b""
+        self.nrstrings = 0
         self.othernames = b""
         self.likechars = b""
         self.version_start = self.add_string(version)
@@ -68,6 +69,7 @@ class DataWriter :
         #end if
         startoffset = len(self.namestrings)
         self.namestrings += struct.pack("<B", len(s)) + s
+        self.nrstrings += 1
         return \
             startoffset
     #end add_string
@@ -153,6 +155,18 @@ class DataWriter :
         for run in self.char_runs :
             char_runs += struct.pack("<LLL", run["startcode"], run["endcode"], run["startindex"])
         #end for
+        sys.stdout.write \
+          (
+                "chars: %(nrchars)d, categories: %(nrcategories)d, strings: %(nrstrings)d/%(lenstrings)d bytes, runs: %(nrruns)d\n"
+            %
+                {
+                    "nrchars" : len(self.chars),
+                    "nrcategories" : len(self.categories),
+                    "nrstrings" : self.nrstrings,
+                    "lenstrings" : len(self.namestrings),
+                    "nrruns" : len(self.char_runs),
+                }
+          )
         hdrsize = 28
         self.out.write \
           (
