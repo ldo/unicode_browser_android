@@ -111,7 +111,10 @@ public class Main extends android.app.Activity
       {
         DetailCategoryButton.setVisibility
           (
-            DetailCategory < 0 || ShowCategory == DetailCategory ?
+                    DetailCategory < 0
+                ||
+                    NowShowing == ThingsToShow.Categories && ShowCategory == DetailCategory
+            ?
                 View.INVISIBLE
             :
                 View.VISIBLE
@@ -125,7 +128,7 @@ public class Main extends android.app.Activity
       {
         ShowCategory = NewCategory;
         CategoryListView.setSelection(ShowCategory);
-        SetShowDetailCategory();
+        SetShowing(ThingsToShow.Categories);
         RebuildMainCharList();
       } /*SetShowingCategory*/
 
@@ -317,6 +320,7 @@ public class Main extends android.app.Activity
                 View.INVISIBLE
           );
         ShowSelector.setSelection(NowShowing.Index);
+        SetShowDetailCategory();
         RebuildMainCharList
           (
             NowShowing == ThingsToShow.Searching ?
