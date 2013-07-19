@@ -248,7 +248,7 @@ with open(file = data_file, errors = "ignore") as data :
                         "name" : charname,
                         "category" : char_category,
                         "other_names" : samechar,
-                        "similar" : likechar,
+                        "similar" : set(likechar),
                     }
             #end if
             sys.stdout.write \
@@ -317,6 +317,23 @@ category_codes = {}
 for name in categories :
     category_codes[name] = out.add_category(name)
 #end for
+for thischar in chars :
+    # ensure similarity relations apply both ways
+    to_delete = set()
+    for thatchar in chars[thischar]["similar"] :
+        if thatchar in chars :
+            chars[thatchar]["similar"].add(thischar) # if not in there already
+        else :
+            to_delete.add(thatchar)
+        #end if
+    #end for
+    if len(to_delete) != 0 :
+        for thatchar in to_delete :
+            sys.stdout.write("similar to %#x: no such %#x\n" % (thischar, thatchar))
+        #end if
+        chars[thischar]["similar"] -= to_delete
+    #end if
+#end for
 for charcode in sorted(chars) :
     thischar = chars[charcode]
     out.add_char \
@@ -325,7 +342,7 @@ for charcode in sorted(chars) :
         name = thischar["name"],
         category = category_codes[thischar["category"]],
         othernames = thischar["other_names"],
-        likechars = thischar["similar"],
+        likechars = sorted(thischar["similar"]),
       )
 #end for
 out.finish()
