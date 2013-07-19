@@ -3,6 +3,7 @@
     <string name="app_name">Unicode Browser</string>
 
     <string name="category_prompt">Category:</string>
+    <string name="search_prompt">Matching:</string>
     <string name="show">Show</string>
     <string name="aka">AKA:</string>
 </resources>

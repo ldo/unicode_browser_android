@@ -24,6 +24,7 @@ import android.widget.TextView;
 import android.widget.ArrayAdapter;
 import android.widget.AdapterView;
 import android.widget.ListView;
+import android.widget.Spinner;
 public class Main extends android.app.Activity
   {
     private TableReader.Unicode Unicode;
@@ -71,11 +72,14 @@ public class Main extends android.app.Activity
 
     private java.util.Map<String, Integer> CategoryCodes;
 
-    private android.widget.Spinner CategoryListView;
+    private android.widget.FrameLayout ShowFrame;
+    private Spinner ShowSelector, CategoryListView;
     private CategoryItemAdapter CategoryList;
+    private android.widget.EditText SearchEntry;
+    private ThingsToShow NowShowing;
     private int ShowCategory;
     private CharItemAdapter MainCharList, LikeCharList;
-    private ArrayAdapter<String> OtherNamesList;
+    private NameItemAdapter OtherNamesList;
     private TextView DetailCategoryDisplay;
     private android.widget.Button DetailCategoryButton;
     private int DetailCategory = -1;
@@ -125,6 +129,30 @@ public class Main extends android.app.Activity
         RebuildMainCharList();
       } /*SetShowingCategory*/
 
+    class ShowingSelect implements AdapterView.OnItemSelectedListener
+      {
+
+        public void onItemSelected
+          (
+            AdapterView<?> Parent,
+            View ItemView,
+            int Position,
+            long ID
+          )
+          {
+            SetShowing((ThingsToShow)Parent.getAdapter().getItem(Position));
+          } /*onItemSelected*/
+
+        public void onNothingSelected
+          (
+            AdapterView<?> Parent
+          )
+          {
+          /* can't think of anything to do */
+          } /*onNothingSelected*/
+
+      } /*ShowingSelect*/;
+
     class CategorySelect implements AdapterView.OnItemSelectedListener
       {
 
@@ -137,7 +165,7 @@ public class Main extends android.app.Activity
           )
           {
             SetShowingCategory(CategoryList.getItem(Position).Code);
-          } /*onClick*/
+          } /*onItemSelected*/
 
         public void onNothingSelected
           (
@@ -212,6 +240,92 @@ public class Main extends android.app.Activity
                     new char[] {(char)Code}
               );
       } /*CharToString*/
+
+    enum ThingsToShow
+      {
+        Categories(0, R.string.category_prompt),
+        Searching(1, R.string.search_prompt),
+        ;
+
+        public final int Index, PromptResID;
+
+        private ThingsToShow
+          (
+            int Index,
+            int PromptResID
+          )
+          {
+            this.Index = Index;
+            this.PromptResID = PromptResID;
+          } /*ThingsToShow*/
+
+      } /*ThingsToShow*/;
+
+    class ShowItemAdapter extends ArrayAdapter<ThingsToShow>
+      {
+        static final int ResID = android.R.layout.simple_dropdown_item_1line;
+        final LayoutInflater TemplateInflater = Main.this.getLayoutInflater();
+
+        public ShowItemAdapter()
+          {
+            super(Main.this, ResID);
+          } /*ShowItemAdapter*/
+
+        @Override
+        public View getView
+          (
+            int Position,
+            View ReuseView,
+            android.view.ViewGroup Parent
+          )
+          {
+            View TheView = ReuseView;
+            if (TheView == null)
+              {
+                TheView = TemplateInflater.inflate(ResID, null);
+              } /*if*/
+            final ThingsToShow ThisItem = getItem(Position);
+            ((TextView)TheView.findViewById(android.R.id.text1)).setText
+              (
+                ThisItem.PromptResID
+              );
+            return
+                TheView;
+          } /*getView*/
+
+      } /*ShowItemAdapter*/;
+
+    void SetShowing
+      (
+        ThingsToShow What
+      )
+      {
+        NowShowing = What;
+      /* ShowFrame.setDisplayedChild(NowShowing.Index); */ /* not for FrameLayout */
+        CategoryListView.setVisibility
+          (
+            What == ThingsToShow.Categories ?
+                View.VISIBLE
+            :
+                View.INVISIBLE
+          );
+        SearchEntry.setVisibility
+          (
+            What == ThingsToShow.Searching ?
+                View.VISIBLE
+            :
+                View.INVISIBLE
+          );
+        ShowSelector.setSelection(NowShowing.Index);
+        RebuildMainCharList
+          (
+            NowShowing == ThingsToShow.Searching ?
+                SearchEntry.getText().toString()
+            :
+                null,
+            false
+          );
+      } /*SetShowing*/
 
     class CharItemAdapter extends ArrayAdapter<CharInfo>
       {
@@ -299,17 +413,63 @@ public class Main extends android.app.Activity
 
       } /*CharSelect*/;
 
+    private void RebuildMainCharList
+      (
+        String Matching, /* null if not doing matching */
+        boolean ShrinkMatch
+      )
+      {
+        if (Matching == null || !ShrinkMatch)
+          {
+            MainCharList.clear();
+          } /*if*/
+        System.err.printf("RebuildMainCharList(%s, %s)\n", Matching, ShrinkMatch); /* debug */
+        if (Matching != null)
+          {
+            Matching = Matching.toLowerCase();
+            if (ShrinkMatch)
+              {
+                for (int i = 0;;)
+                  {
+                    if (i == MainCharList.getCount())
+                        break;
+                    if (MainCharList.getItem(i).Name.toLowerCase().contains(Matching))
+                      {
+                        ++i;
+                      }
+                    else
+                      {
+                        MainCharList.remove(MainCharList.getItem(i));
+                      } /*if*/
+                  } /*for*/
+              }
+            else
+              {
+                for (int i = 0; i < Unicode.NrChars; ++i)
+                  {
+                    if (Unicode.GetCharName(i).toLowerCase().contains(Matching))
+                      {
+                        MainCharList.add(GetChar(i));
+                      } /*if*/
+                  } /*for*/
+              } /*if*/
+          }
+        else
+          {
+            for (int i = 0; i < Unicode.NrChars; ++i)
+              {
+                if (Unicode.GetCharCategory(i) == ShowCategory)
+                  {
+                    MainCharList.add(GetChar(i));
+                  } /*if*/
+              } /*for*/
+          } /*if*/
+        MainCharList.notifyDataSetChanged();
+      } /*RebuildMainCharList*/
+
     private void RebuildMainCharList()
       {
-        MainCharList.clear();
-        for (int i = 0; i < Unicode.NrChars; ++i)
-          {
-            if (Unicode.GetCharCategory(i) == ShowCategory)
-              {
-                MainCharList.add(GetChar(i));
-              } /*if*/
-          } /*for*/
-        MainCharList.notifyDataSetChanged();
+        RebuildMainCharList(null, false);
       } /*RebuildMainCharList*/
 
     private void ShowCharDetails
@@ -359,9 +519,20 @@ public class Main extends android.app.Activity
           } /*for*/
         super.onCreate(ToRestore);
         setContentView(R.layout.main);
+        ShowFrame = (android.widget.FrameLayout)findViewById(R.id.show_frame);
+          {
+            ShowSelector = (Spinner)findViewById(R.id.show_prompt);
+            final ShowItemAdapter ToShow = new ShowItemAdapter();
+            for (ThingsToShow ShowThis : ThingsToShow.values())
+              {
+                ToShow.add(ShowThis);
+              } /*for*/
+            ShowSelector.setAdapter(ToShow);
+            ShowSelector.setOnItemSelectedListener(new ShowingSelect());
+          }
         ShowCategory = CategoryCodes.get("C0 Controls and Basic Latin (Basic Latin)"); /* default */
           {
-            CategoryListView = (android.widget.Spinner)findViewById(R.id.show_selector);
+            CategoryListView = (Spinner)findViewById(R.id.category_selector);
             CategoryList = new CategoryItemAdapter();
             for (int CategoryCode = 0; CategoryCode < Unicode.NrCharCategories; ++CategoryCode)
               {
@@ -374,6 +545,49 @@ public class Main extends android.app.Activity
             CategoryListView.setOnItemSelectedListener(new CategorySelect());
             CategoryListView.setSelection(ShowCategory);
           }
+        SearchEntry = (android.widget.EditText)findViewById(R.id.search_entry);
+        SearchEntry.addTextChangedListener
+          (
+            new android.text.TextWatcher()
+              {
+                private String Before = SearchEntry.getText().toString();
+
+                public void afterTextChanged
+                  (
+                    android.text.Editable TheField
+                  )
+                  {
+                  /* have to do the work here, becauseCharSequence arg to beforeTextChanged and
+                    afterTextChanged may not represent entire field contents */
+                    final String After = TheField.toString();
+                    System.err.printf("SearchEntry.afterTextChanged(%s, %s)\n", Before, After); /* debug */
+                    RebuildMainCharList(After, After.contains(Before));
+                    Before = After;
+                  } /*afterTextChanged*/
+
+                public void beforeTextChanged
+                  (
+                    CharSequence FieldContents,
+                    int Start,
+                    int BeforeCount,
+                    int AfterCount
+                  )
+                  {
+                  /* all done in afterTextChanged */
+                  } /*beforeTextChanged*/
+
+                public void onTextChanged
+                  (
+                    CharSequence NewContents,
+                    int Start,
+                    int BeforeCount,
+                    int AfterCount
+                  )
+                  {
+                  /* all done in afterTextChanged */
+                  } /*TextChanged*/
+              } /*TextWatcher*/
+          );
           {
             final ListView CharListView = (ListView)findViewById(R.id.main_list);
             MainCharList = new CharItemAdapter(R.layout.char_list_item);
@@ -406,7 +620,7 @@ public class Main extends android.app.Activity
                   } /*onClick*/
               }
           );
-        RebuildMainCharList();
+        SetShowing(ThingsToShow.Categories);
       } /*onCreate*/
 
   } /*Main*/;
