@@ -1,4 +1,7 @@
 package nz.gen.geek_central.unicode_browser;
+/*
+    Unicode Browser app--mainline.
+*/
 
 import android.view.View;
 import android.view.LayoutInflater;

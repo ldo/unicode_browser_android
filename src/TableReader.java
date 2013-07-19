@@ -1,17 +1,23 @@
 package nz.gen.geek_central.unicode_browser;
+/*
+    Unicode Browser app--decoder for character table.
 
-import java.nio.ByteBuffer;
+    The character table file is created by the util/get_codes
+    script; see there for a description of the file format.
+*/
+
 public class TableReader
   {
     public static class Unicode
       {
         private final byte[] Contents;
-        private final ByteBuffer ContentsBuf;
-        public final int NrChars, NrCharCategories, NrCharRuns;
-        public final int CharCodesOffset, CharNamesOffset, CharCategoriesOffset, AltNamesOffset, LikeCharsOffset;
-        public final int CategoryNamesOffset, CharRunsStart;
-        public final int NameStringsStart;
-        public final int AltNamesStart, LikeCharsStart;
+        private final java.nio.ByteBuffer ContentsBuf;
+        public final int NrChars, NrCharCategories;
+        private final int NrCharRuns;
+        private final int CharCodesOffset, CharNamesOffset, CharCategoriesOffset, AltNamesOffset, LikeCharsOffset;
+        private final int CategoryNamesOffset, CharRunsStart;
+        private final int NameStringsStart;
+        private final int AltNamesStart, LikeCharsStart;
         public final String Version;
 
         public Unicode
@@ -34,7 +40,7 @@ public class TableReader
               {
                 throw new RuntimeException(Failed.toString());
               } /*try*/
-            ContentsBuf = ByteBuffer.wrap(Contents);
+            ContentsBuf = java.nio.ByteBuffer.wrap(Contents);
             ContentsBuf.order(java.nio.ByteOrder.LITTLE_ENDIAN);
             System.out.printf("TableReader: char codes at %#x, categories at %#x, char runs at %#x, name strings at %#x, alt names at %#x, like chars at %#x, version at %#x\n", ContentsBuf.getInt(0), ContentsBuf.getInt(4), ContentsBuf.getInt(8), ContentsBuf.getInt(12), ContentsBuf.getInt(16), ContentsBuf.getInt(20), ContentsBuf.getInt(24)); /* debug */
             CharCodesOffset = ContentsBuf.getInt(0) + 4;
@@ -54,7 +60,7 @@ public class TableReader
             System.out.printf("TableReader: nr chars = %d, categories = %d, runs = %d, version = %s\n", NrChars, NrCharCategories, NrCharRuns, Version); /* debug */
           } /*Unicode*/
 
-        public String GetString
+        private String GetString
           (
             int Offset
           )
@@ -72,6 +78,16 @@ public class TableReader
                 Result.toString();
           } /*GetString*/
 
+        public String GetCategoryName
+          (
+            int CategoryCode /* must be in [0 .. NrCharCategories - 1] */
+          )
+          /* returns the name of the category with the specified code. */
+          {
+            return
+                GetString(ContentsBuf.getInt(CategoryNamesOffset + CategoryCode * 4));
+          } /*GetCategoryName*/
+
         public int GetCharIndex
           (
             int CharCode
@@ -84,7 +100,10 @@ public class TableReader
               {
                 if (i == NrCharRuns)
                   {
-                    throw new RuntimeException(String.format("undefined char %#X", CharCode));
+                    throw new RuntimeException
+                      (
+                        String.format("TableReader.Unicode: undefined char %#X", CharCode)
+                      );
                   } /*if*/
                 final int Base = CharRunsStart + i * 12;
                 if (CharCode >= ContentsBuf.getInt(Base) && CharCode <= ContentsBuf.getInt(Base + 4))
@@ -98,10 +117,14 @@ public class TableReader
                 Result;
           } /*GetCharIndex*/
 
+      /* following routines return information about a character given its index
+        as returned by GetCharIndex, not its character code */
+
         public int GetCharCode
           (
             int CharIndex
           )
+          /* returns the character code. */
           {
             return
                 ContentsBuf.getInt(CharCodesOffset + CharIndex * 4);
@@ -111,6 +134,7 @@ public class TableReader
           (
             int CharIndex
           )
+          /* returns the character name. */
           {
             return
                 GetString(ContentsBuf.getInt(CharNamesOffset + CharIndex * 4));
@@ -120,6 +144,7 @@ public class TableReader
           (
             int CharIndex
           )
+          /* returns the character's category code. */
           {
             return
                 ContentsBuf.getInt(CharCategoriesOffset + CharIndex * 4);
@@ -129,6 +154,7 @@ public class TableReader
           (
             int CharIndex
           )
+          /* returns the alternative names for the character. */
           {
             final int Base = AltNamesStart + ContentsBuf.getInt(AltNamesOffset + CharIndex * 4);
             final int NrOtherNames = ContentsBuf.getInt(Base);
@@ -145,6 +171,7 @@ public class TableReader
           (
             int CharIndex
           )
+          /* returns the codes of other, similar characters. */
           {
             final int Base = LikeCharsStart + ContentsBuf.getInt(LikeCharsOffset + CharIndex * 4);
             final int NrLikeChars = ContentsBuf.getInt(Base);
@@ -156,15 +183,6 @@ public class TableReader
             return
                 Result;
           } /*GetCharLikeChars*/
-
-        public String GetCategoryName
-          (
-            int CategoryCode
-          )
-          {
-            return
-                GetString(ContentsBuf.getInt(CategoryNamesOffset + CategoryCode * 4));
-          } /*GetCategoryName*/
 
       } /*Unicode*/;
 
