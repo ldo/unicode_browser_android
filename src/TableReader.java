@@ -26,7 +26,6 @@ public class TableReader
           )
           {
             final int ContentsLength = (int)TableFile.getLength();
-            System.out.printf("TableReader: Size of unicode table: %d\n", ContentsLength); /* debug */
             Contents = new byte[ContentsLength];
             try
               {
@@ -42,7 +41,6 @@ public class TableReader
               } /*try*/
             ContentsBuf = java.nio.ByteBuffer.wrap(Contents);
             ContentsBuf.order(java.nio.ByteOrder.LITTLE_ENDIAN);
-            System.out.printf("TableReader: char codes at %#x, categories at %#x, char runs at %#x, name strings at %#x, alt names at %#x, like chars at %#x, version at %#x\n", ContentsBuf.getInt(0), ContentsBuf.getInt(4), ContentsBuf.getInt(8), ContentsBuf.getInt(12), ContentsBuf.getInt(16), ContentsBuf.getInt(20), ContentsBuf.getInt(24)); /* debug */
             CharCodesOffset = ContentsBuf.getInt(0) + 4;
             NrChars = ContentsBuf.getInt(CharCodesOffset - 4);
             CharNamesOffset = CharCodesOffset + NrChars * 4;
@@ -57,7 +55,6 @@ public class TableReader
             AltNamesStart = ContentsBuf.getInt(16);
             LikeCharsStart = ContentsBuf.getInt(20);
             Version = GetString(ContentsBuf.getInt(24));
-            System.out.printf("TableReader: nr chars = %d, categories = %d, runs = %d, version = %s\n", NrChars, NrCharCategories, NrCharRuns, Version); /* debug */
           } /*Unicode*/
 
         private String GetString
