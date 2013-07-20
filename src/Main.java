@@ -431,6 +431,7 @@ public class Main extends android.app.Activity
       )
       {
         CancelBG();
+        MainCharList.setNotifyOnChange(false);
         if (Matching == null || !ShrinkMatch)
           {
             MainCharList.clear();
@@ -516,6 +517,7 @@ public class Main extends android.app.Activity
                     Progress.setVisibility(View.VISIBLE);
                   } /*if*/
                 final int DoThisRun = Math.min(Unicode.NrChars - CurIndex, MaxPerBGRun);
+                MainCharList.setNotifyOnChange(false);
                 for
                   (
                     int i = 0;
@@ -574,12 +576,14 @@ public class Main extends android.app.Activity
           );
         DetailCategoryDisplay.setText(Unicode.GetCategoryName(TheChar.Category));
         DetailCategory = TheChar.Category;
+        OtherNamesList.setNotifyOnChange(false);
         OtherNamesList.clear();
         for (String Name : TheChar.OtherNames)
           {
             OtherNamesList.add(Name);
           } /*for*/
         OtherNamesList.notifyDataSetChanged();
+        LikeCharList.setNotifyOnChange(false);
         LikeCharList.clear();
         for (int Code : TheChar.LikeChars)
           {
