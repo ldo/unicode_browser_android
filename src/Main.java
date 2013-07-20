@@ -310,7 +310,7 @@ public class Main extends android.app.Activity
       /* ShowFrame.setDisplayedChild(NowShowing.Index); */ /* not for FrameLayout */
         if (What != ThingsToShow.Searching)
           {
-            CurrentBG = null;
+            CancelBG();
           } /*if*/
         CategoryListView.setVisibility
           (
@@ -482,6 +482,12 @@ public class Main extends android.app.Activity
 
     private final int MaxPerBGRun = 100;
 
+    private void CancelBG()
+      {
+        Progress.setVisibility(View.INVISIBLE);
+        CurrentBG = null;
+      } /*CancelBG*/
+
     private class BGCharListRebuilder implements Runnable
       {
       /* for doing time-consuming character matches in background to keep interface responsive */
@@ -528,8 +534,7 @@ public class Main extends android.app.Activity
                   }
                 else
                   {
-                    Progress.setVisibility(View.INVISIBLE);
-                    CurrentBG = null;
+                    CancelBG();
                   } /*if*/
               } /*if*/
           } /*run*/
