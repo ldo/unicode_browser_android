@@ -26,12 +26,24 @@
                 android:layout_height="wrap_content"
                 style="@style/spinner_common"
             />
-            <EditText
-                android:id="@+id/search_entry"
-                android:layout_width="120dp"
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                style="@style/text_opposite"
-            />
+                android:orientation="horizontal"
+            >
+                <EditText
+                    android:id="@+id/search_entry"
+                    android:layout_width="120dp"
+                    android:layout_height="wrap_content"
+                    style="@style/text_opposite"
+                />
+                <ProgressBar
+                    android:id="@+id/progress"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:visibility="invisible"
+                />
+            </LinearLayout>
         </FrameLayout>
     </LinearLayout>
     <ListView

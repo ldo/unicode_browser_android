@@ -27,6 +27,8 @@ import android.widget.ListView;
 import android.widget.Spinner;
 public class Main extends android.app.Activity
   {
+    private final android.os.Handler BGTask = new android.os.Handler();
+    private Runnable CurrentBG = null;
     private TableReader.Unicode Unicode;
 
     static class CharInfo
@@ -76,6 +78,7 @@ public class Main extends android.app.Activity
     private Spinner ShowSelector, CategoryListView;
     private CategoryItemAdapter CategoryList;
     private android.widget.EditText SearchEntry;
+    private android.widget.ProgressBar Progress;
     private ThingsToShow NowShowing;
     private int ShowCategory;
     private CharItemAdapter MainCharList, LikeCharList;
@@ -305,6 +308,10 @@ public class Main extends android.app.Activity
       {
         NowShowing = What;
       /* ShowFrame.setDisplayedChild(NowShowing.Index); */ /* not for FrameLayout */
+        if (What != ThingsToShow.Searching)
+          {
+            CurrentBG = null;
+          } /*if*/
         CategoryListView.setVisibility
           (
             What == ThingsToShow.Categories ?
@@ -321,14 +328,14 @@ public class Main extends android.app.Activity
           );
         ShowSelector.setSelection(NowShowing.Index);
         SetShowDetailCategory();
-        RebuildMainCharList
-          (
-            NowShowing == ThingsToShow.Searching ?
-                SearchEntry.getText().toString()
-            :
-                null,
-            false
-          );
+        if (NowShowing == ThingsToShow.Searching)
+          {
+            QueueRebuildMainCharList(SearchEntry.getText().toString());
+          }
+        else
+          {
+            RebuildMainCharList(null, false);
+          } /*if*/
       } /*SetShowing*/
 
     class CharItemAdapter extends ArrayAdapter<CharInfo>
@@ -449,7 +456,8 @@ public class Main extends android.app.Activity
               }
             else
               {
-              /* FIXME: rebuilding entire list can be slow with lots of matches */
+              /* this can be slow, which is why caller should use BGCharListRebuilder instead
+                for this case */
                 for (int i = 0; i < Unicode.NrChars; ++i)
                   {
                     if (Unicode.GetCharName(i).toLowerCase().contains(Matching))
@@ -471,6 +479,71 @@ public class Main extends android.app.Activity
           } /*if*/
         MainCharList.notifyDataSetChanged();
       } /*RebuildMainCharList*/
+
+    private final int MaxPerBGRun = 100;
+
+    private class BGCharListRebuilder implements Runnable
+      {
+      /* for doing time-consuming character matches in background to keep interface responsive */
+        private final String Matching;
+        private int CurIndex;
+        private final long StartTime;
+
+        public BGCharListRebuilder
+          (
+            String Matching
+          )
+          {
+            this.Matching = Matching.toLowerCase();
+            CurIndex = 0;
+            MainCharList.clear();
+            StartTime = System.currentTimeMillis();
+          } /*BGCharListRebuilder*/
+
+        public void run()
+          {
+            if (CurrentBG == this)
+              {
+                if (System.currentTimeMillis() - StartTime > 1000)
+                  {
+                    Progress.setVisibility(View.VISIBLE);
+                  } /*if*/
+                final int DoThisRun = Math.min(Unicode.NrChars - CurIndex, MaxPerBGRun);
+                for
+                  (
+                    int i = 0;
+                    i < MaxPerBGRun && CurIndex < Unicode.NrChars;
+                    ++i, ++CurIndex
+                  )
+                  {
+                    if (Unicode.GetCharName(CurIndex).toLowerCase().contains(Matching))
+                      {
+                        MainCharList.add(GetChar(CurIndex));
+                      } /*if*/
+                  } /*for*/
+                MainCharList.notifyDataSetChanged();
+                if (CurIndex < Unicode.NrChars)
+                  {
+                    BGTask.post(this);
+                  }
+                else
+                  {
+                    Progress.setVisibility(View.INVISIBLE);
+                    CurrentBG = null;
+                  } /*if*/
+              } /*if*/
+          } /*run*/
+
+      } /*BGCharListRebuilder*/;
+
+    private void QueueRebuildMainCharList
+      (
+        final String Matching /* won't be null */
+      )
+      {
+        CurrentBG = new BGCharListRebuilder(Matching);
+        BGTask.post(CurrentBG);
+      } /*QueueRebuildMainCharList*/
 
     private void RebuildMainCharList()
       {
@@ -566,7 +639,14 @@ public class Main extends android.app.Activity
                     afterTextChanged may not represent entire field contents */
                     final String After = TheField.toString();
                     System.err.printf("SearchEntry.afterTextChanged(%s, %s)\n", Before, After); /* debug */
-                    RebuildMainCharList(After, After.contains(Before));
+                    if (After.contains(Before) && MainCharList.getCount() <= MaxPerBGRun)
+                      {
+                        RebuildMainCharList(After, true);
+                      }
+                    else
+                      {
+                        QueueRebuildMainCharList(After);
+                      } /*if*/
                     Before = After;
                   } /*afterTextChanged*/
 
@@ -593,6 +673,7 @@ public class Main extends android.app.Activity
                   } /*TextChanged*/
               } /*TextWatcher*/
           );
+        Progress = (android.widget.ProgressBar)findViewById(R.id.progress);
           {
             final ListView CharListView = (ListView)findViewById(R.id.main_list);
             MainCharList = new CharItemAdapter(R.layout.char_list_item);
