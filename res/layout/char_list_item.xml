@@ -16,11 +16,10 @@
         android:layout_height="wrap_content"
         style="@style/text_common"
     />
-    <TextView
+    <nz.gen.geek_central.unicode_browser.SquashyText
         android:id="@+id/name"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         style="@style/text_common"
-        android:singleLine="true"
     />
 </LinearLayout>

@@ -69,7 +69,7 @@
                 android:text=" "
                 style="@style/text_common"
             />
-            <TextView
+            <nz.gen.geek_central.unicode_browser.SquashyText
                 android:id="@+id/details"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -82,11 +82,12 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal"
         >
-            <TextView
+            <nz.gen.geek_central.unicode_browser.SquashyText
                 android:id="@+id/category"
-                android:layout_width="wrap_content"
+                android:layout_width="200dp"
                 android:layout_height="wrap_content"
                 style="@style/text_common"
+                android:layout_weight="100"
             />
             <Button
                 android:id="@+id/show_category"
