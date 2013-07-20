@@ -430,6 +430,7 @@ public class Main extends android.app.Activity
         boolean ShrinkMatch
       )
       {
+        CancelBG();
         if (Matching == null || !ShrinkMatch)
           {
             MainCharList.clear();
@@ -644,7 +645,7 @@ public class Main extends android.app.Activity
                     afterTextChanged may not represent entire field contents */
                     final String After = TheField.toString();
                     System.err.printf("SearchEntry.afterTextChanged(%s, %s)\n", Before, After); /* debug */
-                    if (After.contains(Before) && MainCharList.getCount() <= MaxPerBGRun)
+                    if (CurrentBG == null && After.contains(Before) && MainCharList.getCount() <= MaxPerBGRun)
                       {
                         RebuildMainCharList(After, true);
                       }
