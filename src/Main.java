@@ -719,4 +719,14 @@ public class Main extends android.app.Activity
         SetShowing(ThingsToShow.Categories);
       } /*onCreate*/
 
+    @Override
+    public void onPostCreate
+      (
+        android.os.Bundle SavedInstanceState
+      )
+      {
+        super.onPostCreate(SavedInstanceState);
+        getWindow().setTitle(String.format(getString(R.string.window_title), Unicode.Version));
+      } /*onPostCreate*/
+
   } /*Main*/;
