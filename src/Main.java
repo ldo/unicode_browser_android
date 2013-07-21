@@ -569,34 +569,47 @@ public class Main extends android.app.Activity
         CharInfo TheChar
       )
       {
-        CurChar = TheChar.Code;
-        LiteralDisplay.setText(CharToString(TheChar.Code));
-        DetailsDisplay.setText
-          (
-            String.format
+        if (TheChar != null)
+          {
+            CurChar = TheChar.Code;
+            LiteralDisplay.setText(CharToString(TheChar.Code));
+            DetailsDisplay.setText
               (
-                java.util.Locale.US,
-                "%s %s",
-                FormatCharCode(TheChar.Code),
-                TheChar.Name
-              )
-          );
-        DetailCategoryDisplay.setText(Unicode.GetCategoryName(TheChar.Category));
-        DetailCategory = TheChar.Category;
-        OtherNamesList.setNotifyOnChange(false);
-        OtherNamesList.clear();
-        for (String Name : TheChar.OtherNames)
+                String.format
+                  (
+                    java.util.Locale.US,
+                    "%s %s",
+                    FormatCharCode(TheChar.Code),
+                    TheChar.Name
+                  )
+              );
+            DetailCategoryDisplay.setText(Unicode.GetCategoryName(TheChar.Category));
+            DetailCategory = TheChar.Category;
+            OtherNamesList.setNotifyOnChange(false);
+            OtherNamesList.clear();
+            for (String Name : TheChar.OtherNames)
+              {
+                OtherNamesList.add(Name);
+              } /*for*/
+            OtherNamesList.notifyDataSetChanged();
+            LikeCharList.setNotifyOnChange(false);
+            LikeCharList.clear();
+            for (int Code : TheChar.LikeChars)
+              {
+                LikeCharList.add(GetChar(Unicode.GetCharIndex(Code, true)));
+              } /*for*/
+            LikeCharList.notifyDataSetChanged();
+          }
+        else
           {
-            OtherNamesList.add(Name);
-          } /*for*/
-        OtherNamesList.notifyDataSetChanged();
-        LikeCharList.setNotifyOnChange(false);
-        LikeCharList.clear();
-        for (int Code : TheChar.LikeChars)
-          {
-            LikeCharList.add(GetChar(Unicode.GetCharIndex(Code)));
-          } /*for*/
-        LikeCharList.notifyDataSetChanged();
+            CurChar = -1;
+            LiteralDisplay.setText("");
+            DetailsDisplay.setText("");
+            DetailCategoryDisplay.setText("");
+            DetailCategory = -1;
+            OtherNamesList.clear();
+            LikeCharList.clear();
+          } /*if*/
         SetShowDetailCategory();
       } /*ShowCharDetails*/
 
@@ -668,7 +681,28 @@ public class Main extends android.app.Activity
                               {
                                 if (Clipboard.hasText())
                                   {
-                                    CollectedText.setText(Clipboard.getText());
+                                    final CharSequence TheText = Clipboard.getText();
+                                    CollectedText.setText(TheText);
+                                    CharInfo TheChar = null;
+                                    if (TheText.length() > 0)
+                                      {
+                                        int CharCode = (int)TheText.charAt(0) & 65535;
+                                        if ((CharCode & 0xfffffc00) == 0xd800 && TheText.length() > 1)
+                                          {
+                                          /* decode UTF-16 */
+                                            final int CharCode2 = (int)TheText.charAt(1) & 65535;
+                                            if ((CharCode2 & 0xfffffc00) == 0xdc00)
+                                              {
+                                                CharCode = (CharCode & 0x3ff) << 10 | CharCode2 & 0x3ff;
+                                              } /*if*/
+                                          } /*if*/
+                                        final int CharIndex = Unicode.GetCharIndex(CharCode, false);
+                                        if (CharIndex >= 0)
+                                          {
+                                            TheChar = GetChar(CharIndex);
+                                          } /*if*/
+                                      } /*if*/
+                                    ShowCharDetails(TheChar);
                                   } /*if*/
                               } /*run*/
                           } /*Runnable*/

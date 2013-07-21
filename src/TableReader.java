@@ -102,20 +102,26 @@ public class TableReader
 
         public int GetCharIndex
           (
-            int CharCode
+            int CharCode,
+            boolean MustExist /* throw exception instead of returning not-found index */
           )
           /* returns the index within the character table of the entry with the
-            specified character code. */
+            specified character code, or -1 if not found. */
           {
             int Result;
             for (int i = 0;;)
               {
                 if (i == NrCharRuns)
                   {
-                    throw new RuntimeException
-                      (
-                        String.format("TableReader.Unicode: undefined char %#X", CharCode)
-                      );
+                    if (MustExist)
+                      {
+                        throw new RuntimeException
+                          (
+                            String.format("TableReader.Unicode: undefined char %#X", CharCode)
+                          );
+                      } /*if*/
+                    Result = -1;
+                    break;
                   } /*if*/
                 final int Base = CharRunsStart + i * 12;
                 if (CharCode >= ContentsBuf.getInt(Base) && CharCode <= ContentsBuf.getInt(Base + 4))
