@@ -4,6 +4,9 @@
 # binary data file that is compiled into the Android app.
 # On Debian, the Unicode tables are installed as part of the “unicode-data”
 # package, and are found in the /usr/share/unicode directory.
+# Otherwise, you can download the latest version from unicode.org
+# at <http://www.unicode.org/Public/UCD/latest/ucd/>, in particular
+# <http://www.unicode.org/Public/UCD/latest/ucd/NamesList.txt>.
 #
 # This script is not run automatically as part of the build process,
 # but is invoked manually. This is to ensure consistent builds, in
