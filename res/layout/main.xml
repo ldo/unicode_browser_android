@@ -125,4 +125,32 @@
             android:layout_weight="50"
         />
     </LinearLayout>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+    >
+        <Button
+            android:id="@+id/add_char"
+            android:layout_width="wrap_content"
+            android:layout_height="32dp"
+            android:background="@android:drawable/ic_input_add"
+            style="@style/button_common"
+        />
+        <TextView
+            android:id="@+id/collected_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text=""
+            android:layout_weight="100"
+            style="@style/text_common"
+        />
+        <Button
+            android:id="@+id/delete_char"
+            android:layout_width="wrap_content"
+            android:layout_height="32dp"
+            android:background="@android:drawable/ic_input_delete"
+            style="@style/button_common"
+        />
+    </LinearLayout>
 </LinearLayout>

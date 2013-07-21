@@ -7,4 +7,9 @@
     <string name="search_prompt">Matching:</string>
     <string name="show">Show</string>
     <string name="aka">AKA:</string>
+
+    <string name="copy_text">Copy Text</string>
+    <string name="paste_text">Paste Text</string>
+
+    <string name="no_text_action">No text to copy or paste</string>
 </resources>

@@ -21,6 +21,7 @@ package nz.gen.geek_central.unicode_browser;
 import android.view.View;
 import android.view.LayoutInflater;
 import android.widget.TextView;
+import android.widget.Button;
 import android.widget.ArrayAdapter;
 import android.widget.AdapterView;
 import android.widget.ListView;
@@ -74,6 +75,8 @@ public class Main extends android.app.Activity
 
     private java.util.Map<String, Integer> CategoryCodes;
 
+    private android.text.ClipboardManager Clipboard;
+
     private android.widget.FrameLayout ShowFrame;
     private Spinner ShowSelector, CategoryListView;
     private CategoryItemAdapter CategoryList;
@@ -83,9 +86,12 @@ public class Main extends android.app.Activity
     private int ShowCategory;
     private CharItemAdapter MainCharList, LikeCharList;
     private NameItemAdapter OtherNamesList;
-    private TextView DetailCategoryDisplay;
-    private android.widget.Button DetailCategoryButton;
+    private TextView LiteralDisplay, DetailsDisplay, DetailCategoryDisplay;
+    private Button DetailCategoryButton;
+    private int CurChar = -1;
     private int DetailCategory = -1;
+    private Button AddToText, DeleteFromText;
+    private TextView CollectedText;
 
     static class CategoryItem
       {
@@ -112,9 +118,10 @@ public class Main extends android.app.Activity
 
     private void SetShowDetailCategory()
       {
+        final boolean ShowingChar = DetailCategory >= 0;
         DetailCategoryButton.setVisibility
           (
-                    DetailCategory < 0
+                    !ShowingChar
                 ||
                     NowShowing == ThingsToShow.Categories && ShowCategory == DetailCategory
             ?
@@ -563,8 +570,9 @@ public class Main extends android.app.Activity
         CharInfo TheChar
       )
       {
-        ((TextView)findViewById(R.id.big_literal)).setText(CharToString(TheChar.Code));
-        ((TextView)findViewById(R.id.details)).setText
+        CurChar = TheChar.Code;
+        LiteralDisplay.setText(CharToString(TheChar.Code));
+        DetailsDisplay.setText
           (
             String.format
               (
@@ -593,6 +601,117 @@ public class Main extends android.app.Activity
         SetShowDetailCategory();
       } /*ShowCharDetails*/
 
+    class TextClickListener implements View.OnClickListener
+      {
+
+        class PopupAction
+          {
+            public final String Name;
+            public final Runnable Action;
+
+            public PopupAction
+              (
+                int NameRes,
+                Runnable Action
+              )
+              {
+                this.Name = getString(NameRes);
+                this.Action = Action;
+              } /*PopupAction*/
+
+            public String toString()
+              {
+                return
+                    Name;
+              } /*toString*/
+
+            public void Invoke()
+              {
+                Action.run();
+              } /*Invoke*/
+
+          } /*PopupAction*/;
+
+        public void onClick
+          (
+            View TheView
+          )
+          {
+            final ArrayAdapter<PopupAction> MenuItems =
+                new ArrayAdapter<PopupAction>(Main.this, android.R.layout.simple_dropdown_item_1line);
+            if (CollectedText.getText().length() != 0)
+              {
+                MenuItems.add
+                  (
+                    new PopupAction
+                      (
+                        R.string.copy_text,
+                        new Runnable()
+                          {
+                            public void run()
+                              {
+                                Clipboard.setText(CollectedText.getText());
+                              } /*run*/
+                          } /*Runnable*/
+                      )
+                  );
+              } /*if*/
+            if (Clipboard.hasText())
+              {
+                MenuItems.add
+                  (
+                    new PopupAction
+                      (
+                        R.string.paste_text,
+                        new Runnable()
+                          {
+                            public void run()
+                              {
+                                if (Clipboard.hasText())
+                                  {
+                                    CollectedText.setText(Clipboard.getText());
+                                  } /*if*/
+                              } /*run*/
+                          } /*Runnable*/
+                      )
+                  );
+              } /*if*/
+            if (MenuItems.getCount() != 0)
+              {
+                new android.app.AlertDialog.Builder(Main.this)
+                    .setSingleChoiceItems
+                      (
+                        /*adapter =*/ MenuItems,
+                        /*checkedItem =*/ -1,
+                        /*listener =*/
+                            new android.content.DialogInterface.OnClickListener()
+                              {
+                                public void onClick
+                                  (
+                                    android.content.DialogInterface Popup,
+                                    int WhichItem
+                                  )
+                                  {
+                                    MenuItems.getItem(WhichItem).Invoke();
+                                    Popup.dismiss();
+                                  } /*onClick*/
+                              } /*DialogInterface.OnClickListener*/
+                      )
+                    .show();
+              }
+            else
+              {
+                android.widget.Toast.makeText
+                  (
+                    /*context =*/ Main.this,
+                    /*text =*/ getString(R.string.no_text_action),
+                    /*duration =*/ android.widget.Toast.LENGTH_SHORT
+                  ).show();
+              } /*if*/
+          } /*onClick*/
+
+      } /*TextClickListener*/;
+
     @Override
     public void onCreate
       (
@@ -600,6 +719,7 @@ public class Main extends android.app.Activity
       )
       {
         Unicode = TableReader.Load(this);
+        Clipboard = (android.text.ClipboardManager)getSystemService(CLIPBOARD_SERVICE);
         CategoryCodes = new java.util.HashMap<String, Integer>(Unicode.NrCharCategories);
         for (int i = 0; i < Unicode.NrCharCategories; ++i)
           {
@@ -698,8 +818,10 @@ public class Main extends android.app.Activity
             CharListView.setAdapter(LikeCharList);
             CharListView.setOnItemClickListener(new CharSelect());
           }
+        LiteralDisplay = (TextView)findViewById(R.id.big_literal);
+        DetailsDisplay = (TextView)findViewById(R.id.details);
         DetailCategoryDisplay = (TextView)findViewById(R.id.category);
-        DetailCategoryButton = (android.widget.Button)findViewById(R.id.show_category);
+        DetailCategoryButton = (Button)findViewById(R.id.show_category);
         DetailCategoryButton.setOnClickListener
           (
             new View.OnClickListener()
@@ -712,6 +834,46 @@ public class Main extends android.app.Activity
                     if (DetailCategory >= 0)
                       {
                         SetShowingCategory(DetailCategory);
+                      } /*if*/
+                  } /*onClick*/
+              }
+          );
+        CollectedText = (TextView)findViewById(R.id.collected_text);
+        CollectedText.setOnClickListener(new TextClickListener());
+        AddToText = (Button)findViewById(R.id.add_char);
+        AddToText.setOnClickListener
+          (
+            new View.OnClickListener()
+              {
+                public void onClick
+                  (
+                    View TheView
+                  )
+                  {
+                    if (CurChar >= 0)
+                      {
+                        CollectedText.setText
+                          (
+                            CollectedText.getText() + CharToString(CurChar)
+                          );
+                      } /*if*/
+                  } /*onClick*/
+              }
+          );
+        DeleteFromText = (Button)findViewById(R.id.delete_char);
+        DeleteFromText.setOnClickListener
+          (
+            new View.OnClickListener()
+              {
+                public void onClick
+                  (
+                    View TheView
+                  )
+                  {
+                    final CharSequence PrevText = CollectedText.getText();
+                    if (PrevText.length() > 0)
+                      {
+                        CollectedText.setText(PrevText.subSequence(0, PrevText.length() - 1));
                       } /*if*/
                   } /*onClick*/
               }
