@@ -38,9 +38,11 @@
                     style="@style/text_opposite"
                 />
                 <ProgressBar
+                    style="@android:style/Widget.ProgressBar.Small"
                     android:id="@+id/progress"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
                     android:visibility="invisible"
                 />
             </LinearLayout>
