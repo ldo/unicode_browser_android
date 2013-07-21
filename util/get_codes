@@ -224,6 +224,7 @@ hexdigits = r"[0-9A-F]+" # file always has them in uppercase
 
 chars = {}
 categories = []
+categories_used = set()
 with open(file = data_file, errors = "ignore") as data :
     charcode = None
     char_category = None
@@ -261,6 +262,7 @@ with open(file = data_file, errors = "ignore") as data :
                 #end if
             #end if
             if include_it :
+                categories_used.add(char_category)
                 chars[charcode] = \
                     {
                         "name" : charname,
@@ -335,8 +337,12 @@ with open(file = data_file, errors = "ignore") as data :
 
 out = DataWriter(out_file, version)
 category_codes = {}
-for name in categories :
-    category_codes[name] = out.add_category(name)
+for name in sorted(categories) :
+    if name in categories_used :
+        category_codes[name] = out.add_category(name)
+    else :
+        sys.stdout.write("ignore unused category “%s”\n" % name)
+    #end if
 #end for
 for thischar in chars :
     # ensure similarity relations apply both ways
