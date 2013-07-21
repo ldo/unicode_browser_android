@@ -37,14 +37,15 @@ import struct
 
 class DataWriter :
 #+
-#    format (all offset, count and character code fields are little-endian unsigned 32-bit integers):
+#    file format (all offset, count and character code fields are little-endian unsigned
+#    32-bit integers):
 #        * offset to nr char codes field (should be 28)
 #        * offset to nr categories field (should be 28 + (nr char codes) * 20)
 #        * offset to nr character runs field
 #        * offset to start of name strings
 #        * offset to start of alternative names
 #        * offset to start of like char codes
-#        * offset to version string (start offset within name strings table, should be zero)
+#        * offset to version string (start offset within name strings table)
 #        * nr char codes
 #        * array [nr char codes] of char codes
 #        * array [nr char codes] of char names (start offsets within name strings table)
@@ -55,9 +56,10 @@ class DataWriter :
 #        * array [nr categories] of category names (start offsets within name strings table)
 #        * nr character runs
 #        * array [nr character runs] of (start code, end code, start index within character arrays)
-#        * table of alternative names (start offsets within name strings table), each preceded by count
+#        * table of alternative names (start offsets within name strings table),
+#          each preceded by count
 #        * table of like char codes, each preceded by count
-#        * table of name strings (7-bit ASCII only), each preceded by length byte (first string should Unicode version)
+#        * table of name strings (7-bit ASCII only), each preceded by length byte
 #-
 
     def __init__(self, outfilename, version) :
