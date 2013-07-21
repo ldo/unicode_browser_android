@@ -443,7 +443,6 @@ public class Main extends android.app.Activity
           {
             MainCharList.clear();
           } /*if*/
-        System.err.printf("RebuildMainCharList(%s, %s)\n", Matching, ShrinkMatch); /* debug */
         if (Matching != null)
           {
             Matching = Matching.toLowerCase();
@@ -768,7 +767,6 @@ public class Main extends android.app.Activity
                   /* have to do the work here, becauseCharSequence arg to beforeTextChanged and
                     afterTextChanged may not represent entire field contents */
                     final String After = TheField.toString();
-                    System.err.printf("SearchEntry.afterTextChanged(%s, %s)\n", Before, After); /* debug */
                     if (CurrentBG == null && After.contains(Before) && MainCharList.getCount() <= MaxPerBGRun)
                       {
                         RebuildMainCharList(After, true);
