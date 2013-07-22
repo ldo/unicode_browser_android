@@ -91,12 +91,6 @@
                 android:text=""
                 style="@style/text_common"
             />
-        </LinearLayout>
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-        >
             <nz.gen.geek_central.unicode_browser.SquashyText
                 android:id="@+id/category"
                 android:layout_width="200dp"
