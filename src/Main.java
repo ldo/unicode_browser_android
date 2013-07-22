@@ -888,6 +888,15 @@ public class Main extends android.app.Activity
                           (
                             CollectedText.getText() + CharToString(CurChar)
                           );
+                      }
+                    else
+                      {
+                        android.widget.Toast.makeText
+                          (
+                            /*context =*/ Main.this,
+                            /*text =*/ getString(R.string.no_char_action),
+                            /*duration =*/ android.widget.Toast.LENGTH_SHORT
+                          ).show();
                       } /*if*/
                   } /*onClick*/
               }
