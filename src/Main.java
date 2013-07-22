@@ -18,6 +18,7 @@ package nz.gen.geek_central.unicode_browser;
     along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
+import android.os.Bundle;
 import android.view.View;
 import android.view.LayoutInflater;
 import android.widget.TextView;
@@ -30,7 +31,7 @@ public class Main extends android.app.Activity
   {
     private final android.os.Handler BGTask = new android.os.Handler();
     private Runnable CurrentBG = null;
-    private TableReader.Unicode Unicode;
+    private static TableReader.Unicode Unicode;
 
     static class CharInfo
       {
@@ -272,6 +273,25 @@ public class Main extends android.app.Activity
             this.Index = Index;
             this.PromptResID = PromptResID;
           } /*ThingsToShow*/
+
+        public static ThingsToShow Val
+          (
+            int Index
+          )
+          {
+            final ThingsToShow Result;
+            for (int i = 0;;)
+              {
+                if (values()[i].Index == Index)
+                  {
+                    Result = values()[i];
+                    break;
+                  } /*if*/
+                ++i;
+              } /*for*/
+            return
+                Result;
+          } /*Val*/
 
       } /*ThingsToShow*/;
 
@@ -759,10 +779,13 @@ public class Main extends android.app.Activity
     @Override
     public void onCreate
       (
-        android.os.Bundle ToRestore
+        Bundle ToRestore
       )
       {
-        Unicode = TableReader.Load(this);
+        if (Unicode == null)
+          {
+            Unicode = TableReader.Load(this);
+          } /*if*/
         Clipboard = (android.text.ClipboardManager)getSystemService(CLIPBOARD_SERVICE);
         CategoryCodes = new java.util.HashMap<String, Integer>(Unicode.NrCharCategories);
         for (int i = 0; i < Unicode.NrCharCategories; ++i)
@@ -782,7 +805,10 @@ public class Main extends android.app.Activity
             ShowSelector.setAdapter(ToShow);
             ShowSelector.setOnItemSelectedListener(new ShowingSelect());
           }
-        ShowCategory = CategoryCodes.get("C0 Controls and Basic Latin (Basic Latin)"); /* default */
+        if (ToRestore == null)
+          {
+            ShowCategory = CategoryCodes.get("C0 Controls and Basic Latin (Basic Latin)"); /* default */
+          } /*if*/
           {
             CategoryListView = (Spinner)findViewById(R.id.category_selector);
             CategoryList = new CategoryItemAdapter();
@@ -794,8 +820,11 @@ public class Main extends android.app.Activity
                   );
               } /*for*/
             CategoryListView.setAdapter(CategoryList);
+            if (ToRestore == null)
+              {
+                CategoryListView.setSelection(ShowCategory);
+              } /*if*/
             CategoryListView.setOnItemSelectedListener(new CategorySelect());
-            CategoryListView.setSelection(ShowCategory);
           }
         SearchEntry = (android.widget.EditText)findViewById(R.id.search_entry);
         SearchEntry.addTextChangedListener
@@ -934,17 +963,81 @@ public class Main extends android.app.Activity
                   } /*onClick*/
               }
           );
-        SetShowing(ThingsToShow.Categories);
+        if (ToRestore == null)
+          {
+            SetShowing(ThingsToShow.Categories);
+          } /*if*/
       } /*onCreate*/
 
     @Override
     public void onPostCreate
       (
-        android.os.Bundle SavedInstanceState
+        Bundle ToRestore
       )
       {
-        super.onPostCreate(SavedInstanceState);
+        super.onPostCreate(ToRestore);
+      /* for some reason setting of window title has to be done here, won’t work in onCreate */
         getWindow().setTitle(String.format(getString(R.string.window_title), Unicode.Version));
       } /*onPostCreate*/
+
+    @Override
+    public void onSaveInstanceState
+      (
+        Bundle ToSave
+      )
+      {
+        super.onSaveInstanceState(ToSave);
+        ToSave.putInt("display_mode", NowShowing.Index);
+        ToSave.putInt("category", ShowCategory);
+        ToSave.putInt("char", CurChar);
+        ToSave.putCharSequence("input_text", CollectedText.getText());
+      } /*onSaveInstanceState*/
+
+    @Override
+    public void onRestoreInstanceState
+      (
+        Bundle ToRestore
+      )
+      {
+        super.onRestoreInstanceState(ToRestore);
+      /* bit of trickiness to avoid OnItemSelectedListeners being called later
+        and overriding restoration of previous selections */
+        final AdapterView.OnItemSelectedListener SaveShowingListener =
+            ShowSelector.getOnItemSelectedListener();
+        final AdapterView.OnItemSelectedListener SaveCategoryListener =
+            CategoryListView.getOnItemSelectedListener();
+        ShowSelector.setOnItemSelectedListener(null);
+        CategoryListView.setOnItemSelectedListener(null);
+          /* avoid listener being triggered by restoration of state */
+        CollectedText.setText(ToRestore.getCharSequence("input_text"));
+          {
+            final int CharIndex = Unicode.GetCharIndex(ToRestore.getInt("char"), false);
+            ShowCharDetails(CharIndex >= 0 ? GetChar(CharIndex) : null);
+          }
+        SetShowingCategory(ToRestore.getInt("category"));
+        final int ToShow = ToRestore.getInt("display_mode");
+        ShowSelector.setSelection(ToShow);
+        SetShowing(ThingsToShow.Val(ToShow));
+        CategoryListView.post /* so it runs after OnItemSelectedListener would be triggered */
+          (
+            new Runnable()
+              {
+                public void run()
+                  {
+                    CategoryListView.setOnItemSelectedListener(SaveCategoryListener);
+                  } /*run*/
+              } /*Runnable*/
+          );
+        ShowSelector.post /* so it runs after OnItemSelectedListener would be triggered */
+          (
+            new Runnable()
+              {
+                public void run()
+                  {
+                    ShowSelector.setOnItemSelectedListener(SaveShowingListener);
+                  } /*run*/
+              } /*Runnable*/
+          );
+      } /*onRestoreInstanceState*/
 
   } /*Main*/;
