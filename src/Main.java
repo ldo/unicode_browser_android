@@ -84,6 +84,7 @@ public class Main extends android.app.Activity
     private android.widget.ProgressBar Progress;
     private ThingsToShow NowShowing;
     private int ShowCategory;
+    private ListView CharListView, OtherNamesView, LikeCharsView;
     private CharItemAdapter MainCharList, LikeCharList;
     private NameItemAdapter OtherNamesList;
     private TextView LiteralDisplay, DetailsDisplay, DetailCategoryDisplay;
@@ -486,6 +487,7 @@ public class Main extends android.app.Activity
               } /*for*/
           } /*if*/
         MainCharList.notifyDataSetChanged();
+        CharListView.setSelection(0);
       } /*RebuildMainCharList*/
 
     private final int MaxPerBGRun = 100;
@@ -502,6 +504,7 @@ public class Main extends android.app.Activity
         private final String Matching;
         private int CurIndex;
         private final long StartTime;
+        private boolean FirstCall;
 
         public BGCharListRebuilder
           (
@@ -512,6 +515,7 @@ public class Main extends android.app.Activity
             CurIndex = 0;
             MainCharList.clear();
             StartTime = System.currentTimeMillis();
+            FirstCall = true;
           } /*BGCharListRebuilder*/
 
         public void run()
@@ -537,6 +541,11 @@ public class Main extends android.app.Activity
                       } /*if*/
                   } /*for*/
                 MainCharList.notifyDataSetChanged();
+                if (FirstCall)
+                  {
+                    CharListView.setSelection(0);
+                    FirstCall = false;
+                  } /*if*/
                 if (CurIndex < Unicode.NrChars)
                   {
                     BGTask.post(this);
@@ -592,6 +601,7 @@ public class Main extends android.app.Activity
                 OtherNamesList.add(Name);
               } /*for*/
             OtherNamesList.notifyDataSetChanged();
+            OtherNamesView.setSelection(0);
             LikeCharList.setNotifyOnChange(false);
             LikeCharList.clear();
             for (int Code : TheChar.LikeChars)
@@ -599,6 +609,7 @@ public class Main extends android.app.Activity
                 LikeCharList.add(GetChar(Unicode.GetCharIndex(Code, true)));
               } /*for*/
             LikeCharList.notifyDataSetChanged();
+            LikeCharsView.setSelection(0);
           }
         else
           {
@@ -801,7 +812,14 @@ public class Main extends android.app.Activity
                   /* have to do the work here, becauseCharSequence arg to beforeTextChanged and
                     afterTextChanged may not represent entire field contents */
                     final String After = TheField.toString();
-                    if (CurrentBG == null && After.contains(Before) && MainCharList.getCount() <= MaxPerBGRun)
+                    if
+                      (
+                            CurrentBG == null
+                        &&
+                            After.contains(Before)
+                        &&
+                            MainCharList.getCount() <= MaxPerBGRun
+                      )
                       {
                         RebuildMainCharList(After, true);
                       }
@@ -836,20 +854,17 @@ public class Main extends android.app.Activity
               } /*TextWatcher*/
           );
         Progress = (android.widget.ProgressBar)findViewById(R.id.progress);
-          {
-            final ListView CharListView = (ListView)findViewById(R.id.main_list);
-            MainCharList = new CharItemAdapter(R.layout.char_list_item);
-            CharListView.setAdapter(MainCharList);
-            CharListView.setOnItemClickListener(new CharSelect());
-          }
+        CharListView = (ListView)findViewById(R.id.main_list);
+        MainCharList = new CharItemAdapter(R.layout.char_list_item);
+        CharListView.setAdapter(MainCharList);
+        CharListView.setOnItemClickListener(new CharSelect());
         OtherNamesList = new NameItemAdapter();
-        ((ListView)findViewById(R.id.names_list)).setAdapter(OtherNamesList);
-          {
-            final ListView CharListView = (ListView)findViewById(R.id.like_list);
-            LikeCharList = new CharItemAdapter(R.layout.also_char_list_item);
-            CharListView.setAdapter(LikeCharList);
-            CharListView.setOnItemClickListener(new CharSelect());
-          }
+        OtherNamesView = (ListView)findViewById(R.id.names_list);
+        OtherNamesView.setAdapter(OtherNamesList);
+        LikeCharsView = (ListView)findViewById(R.id.like_list);
+        LikeCharList = new CharItemAdapter(R.layout.also_char_list_item);
+        LikeCharsView.setAdapter(LikeCharList);
+        LikeCharsView.setOnItemClickListener(new CharSelect());
         LiteralDisplay = (TextView)findViewById(R.id.big_literal);
         DetailsDisplay = (TextView)findViewById(R.id.details);
         DetailCategoryDisplay = (TextView)findViewById(R.id.category);
