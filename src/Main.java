@@ -487,7 +487,7 @@ public class Main extends android.app.Activity
               } /*for*/
           } /*if*/
         MainCharList.notifyDataSetChanged();
-        CharListView.setSelection(0);
+        CharListView.setSelection(0); /* only works after notifyDataSetChanged! */
       } /*RebuildMainCharList*/
 
     private final int MaxPerBGRun = 100;
@@ -543,7 +543,7 @@ public class Main extends android.app.Activity
                 MainCharList.notifyDataSetChanged();
                 if (FirstCall)
                   {
-                    CharListView.setSelection(0);
+                    CharListView.setSelection(0); /* only works after notifyDataSetChanged! */
                     FirstCall = false;
                   } /*if*/
                 if (CurIndex < Unicode.NrChars)
@@ -601,7 +601,7 @@ public class Main extends android.app.Activity
                 OtherNamesList.add(Name);
               } /*for*/
             OtherNamesList.notifyDataSetChanged();
-            OtherNamesView.setSelection(0);
+            OtherNamesView.setSelection(0); /* only works after notifyDataSetChanged! */
             LikeCharList.setNotifyOnChange(false);
             LikeCharList.clear();
             for (int Code : TheChar.LikeChars)
@@ -609,7 +609,7 @@ public class Main extends android.app.Activity
                 LikeCharList.add(GetChar(Unicode.GetCharIndex(Code, true)));
               } /*for*/
             LikeCharList.notifyDataSetChanged();
-            LikeCharsView.setSelection(0);
+            LikeCharsView.setSelection(0); /* only works after notifyDataSetChanged! */
           }
         else
           {
