@@ -79,7 +79,6 @@ public class Main extends android.app.Activity
 
     private android.text.ClipboardManager Clipboard;
 
-    private android.widget.FrameLayout ShowFrame;
     private Spinner ShowSelector, CategoryListView;
     private CategoryItemAdapter CategoryList;
     private android.widget.EditText SearchEntry;
@@ -307,7 +306,6 @@ public class Main extends android.app.Activity
       )
       {
         NowShowing = What;
-      /* ShowFrame.setDisplayedChild(NowShowing.Index); */ /* not for FrameLayout */
         if (What != ThingsToShow.Searching)
           {
             CancelBG();
@@ -784,7 +782,6 @@ public class Main extends android.app.Activity
           } /*for*/
         super.onCreate(ToRestore);
         setContentView(R.layout.main);
-        ShowFrame = (android.widget.FrameLayout)findViewById(R.id.show_frame);
           {
             ShowSelector = (Spinner)findViewById(R.id.show_prompt);
             final ShowItemAdapter ToShow = new ShowItemAdapter();

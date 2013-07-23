@@ -16,7 +16,6 @@
             style="@style/spinner_common"
         />
         <FrameLayout
-            android:id="@+id/show_frame"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
         >
