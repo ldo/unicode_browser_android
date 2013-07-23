@@ -5,6 +5,7 @@ or search for characters with names containing a specified substring.
 Contents:
     src/ -- Java sources for the Android app
     res/ -- resources for the Android app
+    art/ -- artwork for app icon
     util/get_codes -- utility script for building the Unicode table
     AndroidManifest.xml, build.xml, *.properties -- for driving
         Google's Android build tools (note that you will have to
