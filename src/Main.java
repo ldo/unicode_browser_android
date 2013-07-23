@@ -18,6 +18,7 @@ package nz.gen.geek_central.unicode_browser;
     along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
+import java.util.ArrayList;
 import android.os.Bundle;
 import android.view.View;
 import android.view.LayoutInflater;
@@ -93,7 +94,8 @@ public class Main extends android.app.Activity
     private int CurChar = -1;
     private int DetailCategory = -1;
     private Button AddToText, DeleteFromText;
-    private TextView CollectedText;
+    private TextView CollectedTextView;
+    private final ArrayList<Integer> CollectedText = new ArrayList<Integer>();
 
     static class CategoryItem
       {
@@ -225,36 +227,6 @@ public class Main extends android.app.Activity
           } /*getView*/
 
       } /*CategoryItemAdapter*/;
-
-    public static String FormatCharCode
-      (
-        int Code
-      )
-      /* returns the conventional U+xxxx representation for a Unicode character code. */
-      {
-        return
-            String.format(java.util.Locale.US, "U+%04X", Code);
-      } /*FormatCharCode*/
-
-    public static String CharToString
-      (
-        int Code
-      )
-      /* returns a literal string containing the single specified character. */
-      {
-        return
-            new String
-              (
-                Code > 0xffff ?
-                    new char[]
-                        { /* encode as UTF-16, as Java requires */
-                            (char)(Code >> 10 & 0x3ff | 0xd800),
-                            (char)(Code & 0x3ff | 0xdc00),
-                        }
-                :
-                    new char[] {(char)Code}
-              );
-      } /*CharToString*/
 
     enum ThingsToShow
       {
@@ -394,8 +366,8 @@ public class Main extends android.app.Activity
                 TheView = TemplateInflater.inflate(ResID, null);
               } /*if*/
             final CharInfo ThisItem = getItem(Position);
-            ((TextView)TheView.findViewById(R.id.code)).setText(FormatCharCode(ThisItem.Code));
-            ((TextView)TheView.findViewById(R.id.literal)).setText(CharToString(ThisItem.Code));
+            ((TextView)TheView.findViewById(R.id.code)).setText(UnicodeUseful.FormatCharCode(ThisItem.Code));
+            ((TextView)TheView.findViewById(R.id.literal)).setText(UnicodeUseful.CharToString(ThisItem.Code));
             ((TextView)TheView.findViewById(R.id.name)).setText(ThisItem.Name);
             return
                 TheView;
@@ -601,14 +573,14 @@ public class Main extends android.app.Activity
         if (TheChar != null)
           {
             CurChar = TheChar.Code;
-            LiteralDisplay.setText(CharToString(TheChar.Code));
+            LiteralDisplay.setText(UnicodeUseful.CharToString(TheChar.Code));
             DetailsDisplay.setText
               (
                 String.format
                   (
                     java.util.Locale.US,
                     "%s %s",
-                    FormatCharCode(TheChar.Code),
+                    UnicodeUseful.FormatCharCode(TheChar.Code),
                     TheChar.Name
                   )
               );
@@ -643,6 +615,31 @@ public class Main extends android.app.Activity
           } /*if*/
         SetShowDetailCategory();
       } /*ShowCharDetails*/
+
+    private int[] GetCollectedText()
+      {
+        return
+            UnicodeUseful.ToArray(CollectedText);
+      } /*GetCollectedText*/
+
+    private String CollectedTextToString()
+      {
+        return
+            UnicodeUseful.CharsToString(GetCollectedText());
+      } /*CollectedTextToString*/
+
+    private void SetCollectedText
+      (
+        int[] CharCodes
+      )
+      {
+        CollectedText.clear();
+        for (int i = 0; i < CharCodes.length; ++i)
+          {
+            CollectedText.add(CharCodes[i]);
+          } /*for*/
+        CollectedTextView.setText(CollectedTextToString());
+      } /*SetCollectedText*/
 
     class TextClickListener implements View.OnClickListener
       {
@@ -682,7 +679,7 @@ public class Main extends android.app.Activity
           {
             final ArrayAdapter<PopupAction> MenuItems =
                 new ArrayAdapter<PopupAction>(Main.this, android.R.layout.simple_dropdown_item_1line);
-            if (CollectedText.getText().length() != 0)
+            if (CollectedText.size() != 0)
               {
                 MenuItems.add
                   (
@@ -693,7 +690,7 @@ public class Main extends android.app.Activity
                           {
                             public void run()
                               {
-                                Clipboard.setText(CollectedText.getText());
+                                Clipboard.setText(CollectedTextToString());
                               } /*run*/
                           } /*Runnable*/
                       )
@@ -712,22 +709,15 @@ public class Main extends android.app.Activity
                               {
                                 if (Clipboard.hasText())
                                   {
-                                    final CharSequence TheText = Clipboard.getText();
-                                    CollectedText.setText(TheText);
+                                    SetCollectedText
+                                      (
+                                        UnicodeUseful.CharSequenceToChars(Clipboard.getText())
+                                      );
                                     CharInfo TheChar = null;
-                                    if (TheText.length() > 0)
+                                    if (CollectedText.size() > 0)
                                       {
-                                        int CharCode = (int)TheText.charAt(0) & 65535;
-                                        if ((CharCode & 0xfffffc00) == 0xd800 && TheText.length() > 1)
-                                          {
-                                          /* decode UTF-16 */
-                                            final int CharCode2 = (int)TheText.charAt(1) & 65535;
-                                            if ((CharCode2 & 0xfffffc00) == 0xdc00)
-                                              {
-                                                CharCode = (CharCode & 0x3ff) << 10 | CharCode2 & 0x3ff;
-                                              } /*if*/
-                                          } /*if*/
-                                        final int CharIndex = Unicode.GetCharIndex(CharCode, false);
+                                        final int CharIndex =
+                                            Unicode.GetCharIndex(CollectedText.get(0), false);
                                         if (CharIndex >= 0)
                                           {
                                             TheChar = GetChar(CharIndex);
@@ -914,8 +904,8 @@ public class Main extends android.app.Activity
                   } /*onClick*/
               }
           );
-        CollectedText = (TextView)findViewById(R.id.collected_text);
-        CollectedText.setOnClickListener(new TextClickListener());
+        CollectedTextView = (TextView)findViewById(R.id.collected_text);
+        CollectedTextView.setOnClickListener(new TextClickListener());
         AddToText = (Button)findViewById(R.id.add_char);
         AddToText.setOnClickListener
           (
@@ -928,10 +918,8 @@ public class Main extends android.app.Activity
                   {
                     if (CurChar >= 0)
                       {
-                        CollectedText.setText
-                          (
-                            CollectedText.getText() + CharToString(CurChar)
-                          );
+                        CollectedText.add(CurChar);
+                        CollectedTextView.setText(CollectedTextToString());
                       }
                     else
                       {
@@ -955,10 +943,10 @@ public class Main extends android.app.Activity
                     View TheView
                   )
                   {
-                    final CharSequence PrevText = CollectedText.getText();
-                    if (PrevText.length() > 0)
+                    if (CollectedText.size() > 0)
                       {
-                        CollectedText.setText(PrevText.subSequence(0, PrevText.length() - 1));
+                        CollectedText.remove(CollectedText.size() - 1);
+                        CollectedTextView.setText(CollectedTextToString());
                       } /*if*/
                   } /*onClick*/
               }
@@ -990,7 +978,7 @@ public class Main extends android.app.Activity
         ToSave.putInt("display_mode", NowShowing.Index);
         ToSave.putInt("category", ShowCategory);
         ToSave.putInt("char", CurChar);
-        ToSave.putCharSequence("input_text", CollectedText.getText());
+        ToSave.putIntArray("input_text", GetCollectedText());
       } /*onSaveInstanceState*/
 
     @Override
@@ -1009,7 +997,7 @@ public class Main extends android.app.Activity
         ShowSelector.setOnItemSelectedListener(null);
         CategoryListView.setOnItemSelectedListener(null);
           /* avoid listener being triggered by restoration of state */
-        CollectedText.setText(ToRestore.getCharSequence("input_text"));
+        SetCollectedText(ToRestore.getIntArray("input_text"));
           {
             final int CharIndex = Unicode.GetCharIndex(ToRestore.getInt("char"), false);
             ShowCharDetails(CharIndex >= 0 ? GetChar(CharIndex) : null);
