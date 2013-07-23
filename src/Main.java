@@ -642,114 +642,60 @@ public class Main extends android.app.Activity
     class TextClickListener implements View.OnClickListener
       {
 
-        class PopupAction
-          {
-            public final String Name;
-            public final Runnable Action;
-
-            public PopupAction
-              (
-                int NameRes,
-                Runnable Action
-              )
-              {
-                this.Name = getString(NameRes);
-                this.Action = Action;
-              } /*PopupAction*/
-
-            public String toString()
-              {
-                return
-                    Name;
-              } /*toString*/
-
-            public void Invoke()
-              {
-                Action.run();
-              } /*Invoke*/
-
-          } /*PopupAction*/;
-
         public void onClick
           (
             View TheView
           )
           {
-            final ArrayAdapter<PopupAction> MenuItems =
-                new ArrayAdapter<PopupAction>(Main.this, android.R.layout.simple_dropdown_item_1line);
+            final PopupMenu Popup = new PopupMenu(Main.this);
             if (CollectedText.size() != 0)
               {
-                MenuItems.add
+                Popup.AddItem
                   (
-                    new PopupAction
-                      (
-                        R.string.copy_text,
-                        new Runnable()
+                    R.string.copy_text,
+                    new Runnable()
+                      {
+                        public void run()
                           {
-                            public void run()
-                              {
-                                Clipboard.setText(CollectedTextToString());
-                              } /*run*/
-                          } /*Runnable*/
-                      )
+                            Clipboard.setText(CollectedTextToString());
+                          } /*run*/
+                      } /*Runnable*/
                   );
               } /*if*/
             if (Clipboard.hasText())
               {
-                MenuItems.add
+                Popup.AddItem
                   (
-                    new PopupAction
-                      (
-                        R.string.paste_text,
-                        new Runnable()
+                    R.string.paste_text,
+                    new Runnable()
+                      {
+                        public void run()
                           {
-                            public void run()
+                            if (Clipboard.hasText())
                               {
-                                if (Clipboard.hasText())
+                                SetCollectedText
+                                  (
+                                    UnicodeUseful.CharSequenceToChars(Clipboard.getText())
+                                  );
+                                CharInfo TheChar = null;
+                                if (CollectedText.size() > 0)
                                   {
-                                    SetCollectedText
-                                      (
-                                        UnicodeUseful.CharSequenceToChars(Clipboard.getText())
-                                      );
-                                    CharInfo TheChar = null;
-                                    if (CollectedText.size() > 0)
+                                    final int CharIndex =
+                                        Unicode.GetCharIndex(CollectedText.get(0), false);
+                                    if (CharIndex >= 0)
                                       {
-                                        final int CharIndex =
-                                            Unicode.GetCharIndex(CollectedText.get(0), false);
-                                        if (CharIndex >= 0)
-                                          {
-                                            TheChar = GetChar(CharIndex);
-                                          } /*if*/
+                                        TheChar = GetChar(CharIndex);
                                       } /*if*/
-                                    ShowCharDetails(TheChar);
                                   } /*if*/
-                              } /*run*/
-                          } /*Runnable*/
-                      )
+                                ShowCharDetails(TheChar);
+                              } /*if*/
+                          } /*run*/
+                      } /*Runnable*/
                   );
               } /*if*/
-            if (MenuItems.getCount() != 0)
+            if (Popup.NrItems() != 0)
               {
-                new android.app.AlertDialog.Builder(Main.this)
-                    .setSingleChoiceItems
-                      (
-                        /*adapter =*/ MenuItems,
-                        /*checkedItem =*/ -1,
-                        /*listener =*/
-                            new android.content.DialogInterface.OnClickListener()
-                              {
-                                public void onClick
-                                  (
-                                    android.content.DialogInterface Popup,
-                                    int WhichItem
-                                  )
-                                  {
-                                    MenuItems.getItem(WhichItem).Invoke();
-                                    Popup.dismiss();
-                                  } /*onClick*/
-                              } /*DialogInterface.OnClickListener*/
-                      )
-                    .show();
+                Popup.Show();
               }
             else
               {
