@@ -79,6 +79,7 @@ public class Main extends android.app.Activity
 
     private android.text.ClipboardManager Clipboard;
 
+    private int[] Favourites = null;
     private Spinner ShowSelector, CategoryListView;
     private CategoryItemAdapter CategoryList;
     private android.widget.EditText SearchEntry;
@@ -231,6 +232,7 @@ public class Main extends android.app.Activity
       {
         Categories(0, R.string.category_prompt),
         Searching(1, R.string.search_prompt),
+        Favourites(2, R.string.faves_prompt),
         ;
 
         public final int Index, PromptResID;
@@ -466,6 +468,20 @@ public class Main extends android.app.Activity
                   } /*for*/
               } /*if*/
           }
+        else if (NowShowing == ThingsToShow.Favourites)
+          {
+            if (Favourites != null)
+              {
+                for (int i = 0; i < Favourites.length; ++i)
+                  {
+                    final int CharIndex = Unicode.GetCharIndex(Favourites[i], false);
+                    if (CharIndex >= 0)
+                      {
+                        MainCharList.add(GetChar(CharIndex));
+                      } /*if*/
+                  } /*for*/
+              } /*if*/
+          }
         else
           {
             for (int i = 0; i < Unicode.NrChars; ++i)
@@ -638,6 +654,243 @@ public class Main extends android.app.Activity
           } /*for*/
         CollectedTextView.setText(CollectedTextToString());
       } /*SetCollectedText*/
+
+    class DetailClickListener implements View.OnClickListener
+      {
+
+        public void onClick
+          (
+            View TheView
+          )
+          {
+            if (CurChar >= 0)
+              {
+                final int TheChar = CurChar;
+                final PopupMenu Popup = new PopupMenu(Main.this);
+                boolean InFaves = false;
+                if (Favourites != null)
+                  {
+                    for (int i = 0;;)
+                      {
+                        if (i == Favourites.length)
+                          {
+                            InFaves = false;
+                            break;
+                          } /*if*/
+                        if (Favourites[i] == CurChar)
+                          {
+                            InFaves = true;
+                            break;
+                          } /*if*/
+                        ++i;
+                      } /*for*/
+                  } /*if*/
+                if (InFaves)
+                  {
+                    Popup.AddItem
+                      (
+                        R.string.remove_from_faves,
+                        new Runnable()
+                          {
+                            public void run()
+                              {
+                                final int[] NewFavourites =
+                                    Favourites != null && Favourites.length > 1 ?
+                                        new int[Favourites.length - 1]
+                                    :
+                                        null;
+                                boolean Removed = NewFavourites == null;
+                                if (NewFavourites != null)
+                                  {
+                                    for (int i = 0, j = 0;;)
+                                      {
+                                        if (i == Favourites.length)
+                                            break;
+                                        if (Favourites[i] != TheChar)
+                                          {
+                                            if (j == NewFavourites.length)
+                                                break;
+                                            NewFavourites[j++] = Favourites[i];
+                                          }
+                                        else
+                                          {
+                                            Removed = true;
+                                          } /*if*/
+                                        ++i;
+                                      } /*for*/
+                                  } /*if*/
+                                if (Removed)
+                                  {
+                                    Favourites = NewFavourites;
+                                    if (NowShowing == ThingsToShow.Favourites)
+                                      {
+                                        RebuildMainCharList();
+                                      } /*if*/
+                                  } /*if*/
+                              } /*run*/
+                          } /*Runnable*/
+                      );
+                  }
+                else
+                  {
+                    Popup.AddItem
+                      (
+                        R.string.add_to_faves,
+                        new Runnable()
+                          {
+                            public void run()
+                              {
+                                final java.util.TreeSet<Integer> NewFaves =
+                                  /* keep them sorted by character code */
+                                    new java.util.TreeSet<Integer>
+                                      (
+                                        new java.util.Comparator<Integer>()
+                                          {
+                                            @Override
+                                            public int compare
+                                              (
+                                                Integer A,
+                                                Integer B
+                                              )
+                                              {
+                                                return
+                                                    A.compareTo(B);
+                                              } /*compare*/
+                                          } /*Comparator*/
+                                      );
+                                if (Favourites != null)
+                                  {
+                                    for (int i = 0; i < Favourites.length; ++i)
+                                      {
+                                        NewFaves.add(Favourites[i]);
+                                      } /*for*/
+                                  } /*if*/
+                                NewFaves.add(TheChar);
+                                if (NewFaves.size() > (Favourites != null ? Favourites.length : 0))
+                                  {
+                                    Favourites = new int[NewFaves.size()];
+                                    int i = 0;
+                                    for (Integer CharCode : NewFaves)
+                                      {
+                                        Favourites[i++] = CharCode;
+                                      } /*for*/
+                                    if (NowShowing == ThingsToShow.Favourites)
+                                      {
+                                        RebuildMainCharList();
+                                      } /*if*/
+                                  } /*if*/
+                              } /*run*/
+                          } /*Runnable*/
+                      );
+                  } /*if*/
+                Popup.Show();
+              }
+            else
+              {
+                android.widget.Toast.makeText
+                  (
+                    /*context =*/ Main.this,
+                    /*text =*/ getString(R.string.no_char_action),
+                    /*duration =*/ android.widget.Toast.LENGTH_SHORT
+                  ).show();
+              } /*if*/
+          } /*onClick*/
+
+      } /*DetailClickListener*/;
+
+    private static final String StateFileName = "state.txt";
+      /* shouldn't be large, so I don't bother compressing it */
+
+    private void SaveState()
+      /* saves state (currently just favourites) to persistent storage. */
+      {
+        final org.json.JSONObject Flattened = new org.json.JSONObject();
+        try
+          {
+            final org.json.JSONArray Faves = new org.json.JSONArray();
+            if (Favourites != null)
+              {
+                for (int i = 0; i < Favourites.length; ++i)
+                  {
+                    Faves.put(Favourites[i]);
+                  } /*for*/
+              } /*if*/
+            Flattened.put("favourites", Faves);
+          }
+        catch (org.json.JSONException Bug)
+          {
+            throw new RuntimeException(Bug.toString());
+          } /*try*/
+        boolean Success = false;
+        try
+          {
+            deleteFile(StateFileName); /* don't bother doing any fancy atomic stuff */
+            final java.io.FileOutputStream NewState =
+                openFileOutput(StateFileName, MODE_WORLD_READABLE);
+            NewState.write(Flattened.toString().getBytes("utf-8"));
+            NewState.flush();
+            NewState.close();
+            Success = true;
+          }
+        catch (java.io.IOException Bad)
+          {
+          } /*try*/
+        if (!Success)
+          {
+            deleteFile(StateFileName); /* ensure no leftover partial state */
+          } /*if*/
+      } /*SaveState*/
+
+    private void RestoreState()
+      /* restores state (currently just favourites) from persistent storage. */
+      {
+        try
+          {
+            org.json.JSONObject Flattened = null;
+            try
+              {
+                final java.io.FileInputStream OldState = openFileInput(StateFileName);
+                byte[] Contents = new byte[512];
+                int ContentsLength = 0;
+                for (;;)
+                  {
+                    if (ContentsLength == Contents.length)
+                      {
+                        final byte[] NewContents = new byte[Contents.length * 2];
+                        System.arraycopy(Contents, 0, NewContents, 0, ContentsLength);
+                        Contents = NewContents;
+                      } /*if*/
+                    final int MoreBytes =
+                        OldState.read(Contents, ContentsLength, Contents.length - ContentsLength);
+                    if (MoreBytes <= 0)
+                        break;
+                    ContentsLength += MoreBytes;
+                  } /*for*/
+                OldState.close();
+                Flattened = new org.json.JSONObject(new String(Contents, 0, ContentsLength, "utf-8"));
+              }
+            catch (java.io.IOException Bad)
+              {
+              } /*try*/
+            if (Flattened != null)
+              {
+                final org.json.JSONArray Faves = Flattened.optJSONArray("favourites");
+                if (Faves != null && Faves.length() != 0)
+                  {
+                    final int[] NewFavourites = new int[Faves.length()];
+                    for (int i = 0; i < NewFavourites.length; ++i)
+                      {
+                        NewFavourites[i] = Faves.getInt(i);
+                      } /*for*/
+                    Favourites = NewFavourites;
+                  } /*if*/
+              } /*if*/
+          }
+        catch (org.json.JSONException Corrupted)
+          {
+            deleteFile(StateFileName); /* put it out of our misery */
+          } /*trye*/
+      } /*RestoreState*/
 
     class TextClickListener implements View.OnClickListener
       {
@@ -829,6 +1082,11 @@ public class Main extends android.app.Activity
         LikeCharsView.setOnItemClickListener(new CharSelect());
         LiteralDisplay = (TextView)findViewById(R.id.big_literal);
         DetailsDisplay = (TextView)findViewById(R.id.details);
+          {
+            final DetailClickListener OnDetailClick = new DetailClickListener();
+            LiteralDisplay.setOnClickListener(OnDetailClick);
+            DetailsDisplay.setOnClickListener(OnDetailClick);
+          }
         DetailCategoryDisplay = (TextView)findViewById(R.id.category);
         DetailCategoryButton = (Button)findViewById(R.id.show_category);
         DetailCategoryButton.setOnClickListener
@@ -894,6 +1152,7 @@ public class Main extends android.app.Activity
                   } /*onClick*/
               }
           );
+        RestoreState();
         if (ToRestore == null)
           {
             SetShowing(ThingsToShow.Categories);
@@ -970,5 +1229,12 @@ public class Main extends android.app.Activity
               } /*Runnable*/
           );
       } /*onRestoreInstanceState*/
+
+    @Override
+    public void onPause()
+      {
+        SaveState(); /* good place to do this */
+        super.onPause();
+      } /*onPause*/
 
   } /*Main*/;

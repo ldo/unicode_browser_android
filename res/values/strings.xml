@@ -5,8 +5,12 @@
 
     <string name="category_prompt">Category:</string>
     <string name="search_prompt">Matching:</string>
+    <string name="faves_prompt">Favourites</string>
     <string name="show">Show</string>
     <string name="aka">AKA:</string>
+
+    <string name="add_to_faves">Add to Favourites</string>
+    <string name="remove_from_faves">Remove From Favourites</string>
 
     <string name="copy_text">Copy Text</string>
     <string name="paste_text">Paste Text</string>
