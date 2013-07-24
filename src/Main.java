@@ -87,7 +87,7 @@ public class Main extends android.app.Activity
     private ListView CharListView, OtherNamesView, LikeCharsView;
     private CharItemAdapter MainCharList, LikeCharList;
     private NameItemAdapter OtherNamesList;
-    private TextView LiteralDisplay, DetailsDisplay, DetailCategoryDisplay;
+    private TextView NoCharsDisplay, LiteralDisplay, DetailsDisplay, DetailCategoryDisplay;
     private Button DetailCategoryButton;
     private int CurChar = -1;
     private int DetailCategory = -1;
@@ -241,19 +241,22 @@ public class Main extends android.app.Activity
 
     enum ShowModeEnum
       {
-        Categories(0),
-        Searching(1),
-        Favourites(2),
+        Categories(0, R.string.category_no_chars),
+        Searching(1, R.string.search_no_chars),
+        Favourites(2, R.string.faves_no_chars),
         ;
 
         public final int Index;
+        public final int EmptyStringID; /* ID of string to show when character list is empty */
 
         private ShowModeEnum
           (
-            int Index
+            int Index,
+            int EmptyStringID
           )
           {
             this.Index = Index;
+            this.EmptyStringID = EmptyStringID;
           } /*ShowModeEnum*/
 
         public static ShowModeEnum Val
@@ -369,6 +372,7 @@ public class Main extends android.app.Activity
             :
                 View.INVISIBLE
           );
+        NoCharsDisplay.setText(NowShowing.EmptyStringID);
         ShowSelector.setSelection(NowShowing.Index);
         SetShowDetailCategory();
         ShowSelector.post /* so it runs after OnItemSelectedListener would be triggered */
@@ -1094,6 +1098,8 @@ public class Main extends android.app.Activity
           );
         Progress = (android.widget.ProgressBar)findViewById(R.id.progress);
         CharListView = (ListView)findViewById(R.id.main_list);
+        NoCharsDisplay = (TextView)findViewById(R.id.main_list_empty);
+        CharListView.setEmptyView(NoCharsDisplay);
         MainCharList = new CharItemAdapter(R.layout.char_list_item);
         CharListView.setAdapter(MainCharList);
         CharListView.setOnItemClickListener(new CharSelect(false));
