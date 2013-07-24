@@ -28,6 +28,7 @@ import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.Spinner;
 import nz.gen.geek_central.android_useful.UnicodeUseful;
+import nz.gen.geek_central.android_useful.JSONPrefs;
 import nz.gen.geek_central.android_useful.PopupMenu;
 public class Main extends android.app.Activity
   {
@@ -805,92 +806,18 @@ public class Main extends android.app.Activity
     private void SaveState()
       /* saves state (currently just favourites) to persistent storage. */
       {
-        final org.json.JSONObject Flattened = new org.json.JSONObject();
-        try
-          {
-            final org.json.JSONArray Faves = new org.json.JSONArray();
-            if (Favourites != null)
-              {
-                for (int i = 0; i < Favourites.length; ++i)
-                  {
-                    Faves.put(Favourites[i]);
-                  } /*for*/
-              } /*if*/
-            Flattened.put("favourites", Faves);
-          }
-        catch (org.json.JSONException Bug)
-          {
-            throw new RuntimeException(Bug.toString());
-          } /*try*/
-        boolean Success = false;
-        try
-          {
-            deleteFile(StateFileName); /* don't bother doing any fancy atomic stuff */
-            final java.io.FileOutputStream NewState =
-                openFileOutput(StateFileName, MODE_WORLD_READABLE);
-            NewState.write(Flattened.toString().getBytes("utf-8"));
-            NewState.flush();
-            NewState.close();
-            Success = true;
-          }
-        catch (java.io.IOException Bad)
-          {
-          } /*try*/
-        if (!Success)
-          {
-            deleteFile(StateFileName); /* ensure no leftover partial state */
-          } /*if*/
+        new JSONPrefs(this, StateFileName)
+            .PutIntArray("favourites", Favourites)
+            .Save(); /* ignore errors! */
       } /*SaveState*/
 
     private void RestoreState()
       /* restores state (currently just favourites) from persistent storage. */
       {
-        try
-          {
-            org.json.JSONObject Flattened = null;
-            try
-              {
-                final java.io.FileInputStream OldState = openFileInput(StateFileName);
-                byte[] Contents = new byte[512];
-                int ContentsLength = 0;
-                for (;;)
-                  {
-                    if (ContentsLength == Contents.length)
-                      {
-                        final byte[] NewContents = new byte[Contents.length * 2];
-                        System.arraycopy(Contents, 0, NewContents, 0, ContentsLength);
-                        Contents = NewContents;
-                      } /*if*/
-                    final int MoreBytes =
-                        OldState.read(Contents, ContentsLength, Contents.length - ContentsLength);
-                    if (MoreBytes <= 0)
-                        break;
-                    ContentsLength += MoreBytes;
-                  } /*for*/
-                OldState.close();
-                Flattened = new org.json.JSONObject(new String(Contents, 0, ContentsLength, "utf-8"));
-              }
-            catch (java.io.IOException Bad)
-              {
-              } /*try*/
-            if (Flattened != null)
-              {
-                final org.json.JSONArray Faves = Flattened.optJSONArray("favourites");
-                if (Faves != null && Faves.length() != 0)
-                  {
-                    final int[] NewFavourites = new int[Faves.length()];
-                    for (int i = 0; i < NewFavourites.length; ++i)
-                      {
-                        NewFavourites[i] = Faves.getInt(i);
-                      } /*for*/
-                    Favourites = NewFavourites;
-                  } /*if*/
-              } /*if*/
-          }
-        catch (org.json.JSONException Corrupted)
-          {
-            deleteFile(StateFileName); /* put it out of our misery */
-          } /*trye*/
+        Favourites =
+            new JSONPrefs(this, StateFileName)
+            .Load()
+            .GetIntArray("favourites");
       } /*RestoreState*/
 
     class TextClickListener implements View.OnClickListener
