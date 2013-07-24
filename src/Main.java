@@ -231,7 +231,10 @@ public class Main extends android.app.Activity
     class ShowModeItem
       {
         public final ShowModeEnum ModeEnum;
-        public final int PromptResID, ItemResID;
+        public final int PromptResID;
+          /* string that appears in spinner when this item is selected */
+        public final int ItemResID;
+          /* string to appear in popup to select new item */
 
         public ShowModeItem
           (
