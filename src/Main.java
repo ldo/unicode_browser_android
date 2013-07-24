@@ -30,52 +30,12 @@ import android.widget.Spinner;
 import nz.gen.geek_central.android_useful.UnicodeUseful;
 import nz.gen.geek_central.android_useful.JSONPrefs;
 import nz.gen.geek_central.android_useful.PopupMenu;
+import static nz.gen.geek_central.unicode_browser.TableReader.CharInfo;
+import static nz.gen.geek_central.unicode_browser.TableReader.Unicode;
 public class Main extends android.app.Activity
   {
     private final android.os.Handler BGTask = new android.os.Handler();
     private Runnable CurrentBG = null;
-    private static TableReader.Unicode Unicode;
-
-    static class CharInfo
-      {
-        public final int Code;
-        public final String Name;
-        public final int Category; /* index into CategoryNames table */
-        public final String[] OtherNames;
-        public final int[] LikeChars; /* codes for other similar chars */
-
-        public CharInfo
-          (
-            int Code,
-            String Name,
-            int Category,
-            String[] OtherNames,
-            int[] LikeChars
-          )
-          {
-            this.Code = Code;
-            this.Name = Name.intern();
-            this.Category = Category;
-            this.OtherNames = OtherNames;
-            this.LikeChars = LikeChars;
-          } /*CharInfo*/
-      } /*CharInfo*/;
-
-    CharInfo GetChar
-      (
-        int CharIndex
-      )
-      {
-        return
-            new CharInfo
-              (
-                /*Code =*/ Unicode.GetCharCode(CharIndex),
-                /*Name =*/ Unicode.GetCharName(CharIndex),
-                /*Category =*/ Unicode.GetCharCategory(CharIndex),
-                /*OtherNames =*/ Unicode.GetCharOtherNames(CharIndex),
-                /*LikeChars =*/ Unicode.GetCharLikeChars(CharIndex)
-              );
-      } /*GetChar*/
 
     private java.util.Map<String, Integer> CategoryCodes;
 
@@ -440,14 +400,14 @@ public class Main extends android.app.Activity
           } /*if*/
         if (Matching != null)
           {
-            Matching = Matching.toLowerCase();
+            final String[] MatchWords = TableReader.SplitWords(Matching);
             if (ShrinkMatch)
               {
                 for (int i = 0;;)
                   {
                     if (i == MainCharList.getCount())
                         break;
-                    if (MainCharList.getItem(i).Name.toLowerCase().contains(Matching))
+                    if (TableReader.CharNameMatches(MainCharList.getItem(i).Code, MatchWords))
                       {
                         ++i;
                       }
@@ -463,9 +423,9 @@ public class Main extends android.app.Activity
                 for this case */
                 for (int i = 0; i < Unicode.NrChars; ++i)
                   {
-                    if (Unicode.GetCharName(i).toLowerCase().contains(Matching))
+                    if (TableReader.CharNameMatches(MainCharList.getItem(i).Code, MatchWords))
                       {
-                        MainCharList.add(GetChar(i));
+                        MainCharList.add(TableReader.GetCharByIndex(i));
                       } /*if*/
                   } /*for*/
               } /*if*/
@@ -479,7 +439,7 @@ public class Main extends android.app.Activity
                     final int CharIndex = Unicode.GetCharIndex(Favourites[i], false);
                     if (CharIndex >= 0)
                       {
-                        MainCharList.add(GetChar(CharIndex));
+                        MainCharList.add(TableReader.GetCharByIndex(CharIndex));
                       } /*if*/
                   } /*for*/
               } /*if*/
@@ -490,7 +450,7 @@ public class Main extends android.app.Activity
               {
                 if (Unicode.GetCharCategory(i) == ShowCategory)
                   {
-                    MainCharList.add(GetChar(i));
+                    MainCharList.add(TableReader.GetCharByIndex(i));
                   } /*if*/
               } /*for*/
           } /*if*/
@@ -509,7 +469,7 @@ public class Main extends android.app.Activity
     private class BGCharListRebuilder implements Runnable
       {
       /* for doing time-consuming character matches in background to keep interface responsive */
-        private final String Matching;
+        private final String[] Matching;
         private int CurIndex;
         private final long StartTime;
         private boolean FirstCall;
@@ -519,7 +479,7 @@ public class Main extends android.app.Activity
             String Matching
           )
           {
-            this.Matching = Matching.toLowerCase();
+            this.Matching = TableReader.SplitWords(Matching);
             CurIndex = 0;
             MainCharList.clear();
             StartTime = System.currentTimeMillis();
@@ -530,7 +490,7 @@ public class Main extends android.app.Activity
           {
             if (CurrentBG == this)
               {
-                if (System.currentTimeMillis() - StartTime > 1000)
+                if (System.currentTimeMillis() - StartTime > 500)
                   {
                     Progress.setVisibility(View.VISIBLE);
                   } /*if*/
@@ -543,9 +503,9 @@ public class Main extends android.app.Activity
                     ++i, ++CurIndex
                   )
                   {
-                    if (Unicode.GetCharName(CurIndex).toLowerCase().contains(Matching))
+                    if (TableReader.CharNameMatches(Unicode.GetCharCode(CurIndex), Matching))
                       {
-                        MainCharList.add(GetChar(CurIndex));
+                        MainCharList.add(TableReader.GetCharByIndex(CurIndex));
                       } /*if*/
                   } /*for*/
                 MainCharList.notifyDataSetChanged();
@@ -614,7 +574,7 @@ public class Main extends android.app.Activity
             LikeCharList.clear();
             for (int Code : TheChar.LikeChars)
               {
-                LikeCharList.add(GetChar(Unicode.GetCharIndex(Code, true)));
+                LikeCharList.add(TableReader.GetCharByCode(Code, true));
               } /*for*/
             LikeCharList.notifyDataSetChanged();
             LikeCharsView.setSelection(0); /* only works after notifyDataSetChanged! */
@@ -861,12 +821,7 @@ public class Main extends android.app.Activity
                                 CharInfo TheChar = null;
                                 if (CollectedText.size() > 0)
                                   {
-                                    final int CharIndex =
-                                        Unicode.GetCharIndex(CollectedText.get(0), false);
-                                    if (CharIndex >= 0)
-                                      {
-                                        TheChar = GetChar(CharIndex);
-                                      } /*if*/
+                                    TheChar = TableReader.GetCharByCode(CollectedText.get(0), false);
                                   } /*if*/
                                 ShowCharDetails(TheChar);
                               } /*if*/
@@ -897,10 +852,7 @@ public class Main extends android.app.Activity
         Bundle ToRestore
       )
       {
-        if (Unicode == null)
-          {
-            Unicode = TableReader.Load(this);
-          } /*if*/
+        TableReader.Load(this);
         Clipboard = (android.text.ClipboardManager)getSystemService(CLIPBOARD_SERVICE);
         CategoryCodes = new java.util.HashMap<String, Integer>(Unicode.NrCharCategories);
         for (int i = 0; i < Unicode.NrCharCategories; ++i)
@@ -1130,7 +1082,7 @@ public class Main extends android.app.Activity
         SetCollectedText(ToRestore.getIntArray("input_text"));
           {
             final int CharIndex = Unicode.GetCharIndex(ToRestore.getInt("char"), false);
-            ShowCharDetails(CharIndex >= 0 ? GetChar(CharIndex) : null);
+            ShowCharDetails(CharIndex >= 0 ? TableReader.GetCharByIndex(CharIndex) : null);
           }
         SetShowingCategory(ToRestore.getInt("category"));
         final int ToShow = ToRestore.getInt("display_mode");

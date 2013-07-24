@@ -1,6 +1,6 @@
 package nz.gen.geek_central.unicode_browser;
 /*
-    Unicode Browser app--decoder for character table.
+    Unicode Browser app--loading of character table.
 
     The character table file is created by the util/get_codes
     script; see there for a description of the file format.
@@ -20,9 +20,11 @@ package nz.gen.geek_central.unicode_browser;
     the License.
 */
 
+import android.util.SparseArray;
 public class TableReader
   {
-    public static class Unicode
+
+    public static class UnicodeTable
       {
         private final byte[] Contents;
         private final java.nio.ByteBuffer ContentsBuf;
@@ -34,7 +36,7 @@ public class TableReader
         private final int AltNamesStart, LikeCharsStart;
         public final String Version;
 
-        public Unicode
+        public UnicodeTable
           (
             android.content.res.AssetFileDescriptor TableFile
           )
@@ -69,7 +71,7 @@ public class TableReader
             AltNamesStart = ContentsBuf.getInt(16);
             LikeCharsStart = ContentsBuf.getInt(20);
             Version = GetString(ContentsBuf.getInt(24));
-          } /*Unicode*/
+          } /*UnicodeTable*/
 
         private String GetString
           (
@@ -116,7 +118,7 @@ public class TableReader
                       {
                         throw new RuntimeException
                           (
-                            String.format("TableReader.Unicode: undefined char %#X", CharCode)
+                            String.format("UnicodeTable: undefined char %#X", CharCode)
                           );
                       } /*if*/
                     Result = -1;
@@ -201,15 +203,166 @@ public class TableReader
                 Result;
           } /*GetCharLikeChars*/
 
-      } /*Unicode*/;
+      } /*UnicodeTable*/;
 
-    public static Unicode Load
+    public static UnicodeTable Unicode;
+    public static SparseArray<CharInfo> CharsByIndex;
+    public static SparseArray<String[]> CharNamesSplitByCode;
+
+    public static void Load
       (
         android.content.Context ctx
       )
+      /* must be called before using anything else in this class. */
       {
-        return
-            new Unicode(ctx.getResources().openRawResourceFd(R.raw.unicode));
+        if (Unicode == null)
+          {
+            Unicode = new UnicodeTable(ctx.getResources().openRawResourceFd(R.raw.unicode));
+          } /*if*/
       } /*Load*/
+
+    public static String[] SplitWords
+      (
+        String s
+      )
+      /* returns the components of s split at spaces, and converted to lower case. */
+      {
+        final java.util.ArrayList<String> Result = new java.util.ArrayList<String>();
+        StringBuilder CurComponent = null;
+        for (int i = 0;;)
+          {
+            if (i == s.length() || s.charAt(i) == ' ')
+              {
+                if (CurComponent != null)
+                  {
+                    Result.add(CurComponent.toString().toLowerCase());
+                    CurComponent = null;
+                  } /*if*/
+                if (i == s.length())
+                    break;
+              } /*if*/
+            if (s.charAt(i) != ' ')
+              {
+                if (CurComponent == null)
+                  {
+                    CurComponent = new StringBuilder();
+                  } /*if*/
+                CurComponent.append(s.charAt(i));
+              } /*if*/
+            ++i;
+          } /*for*/
+        return
+            Result.toArray(new String[Result.size()]);
+      } /*SplitWords*/
+
+    public static class CharInfo
+      {
+        public final int Code;
+        public final String Name;
+        public final int Category; /* index into CategoryNames table */
+        public final String[] OtherNames;
+        public final int[] LikeChars; /* codes for other similar chars */
+
+        public CharInfo
+          (
+            int Code,
+            String Name,
+            int Category,
+            String[] OtherNames,
+            int[] LikeChars
+          )
+          {
+            this.Code = Code;
+            this.Name = Name.intern();
+            this.Category = Category;
+            this.OtherNames = OtherNames;
+            this.LikeChars = LikeChars;
+          } /*CharInfo*/
+      } /*CharInfo*/;
+
+    public static CharInfo GetCharByIndex
+      (
+        int CharIndex
+      )
+      {
+        CharInfo Result = CharsByIndex != null ? CharsByIndex.get(CharIndex) : null;
+        if (Result == null)
+          {
+            Result = new CharInfo
+              (
+                /*Code =*/ Unicode.GetCharCode(CharIndex),
+                /*Name =*/ Unicode.GetCharName(CharIndex),
+                /*Category =*/ Unicode.GetCharCategory(CharIndex),
+                /*OtherNames =*/ Unicode.GetCharOtherNames(CharIndex),
+                /*LikeChars =*/ Unicode.GetCharLikeChars(CharIndex)
+              );
+            if (CharsByIndex == null)
+              {
+                CharsByIndex = new SparseArray<CharInfo>(Unicode.NrChars);
+              } /*if*/
+            CharsByIndex.put(CharIndex, Result);
+          } /*if*/
+        return
+            Result;
+      } /*GetCharByIndex*/
+
+    public static CharInfo GetCharByCode
+      (
+        int CharCode,
+        boolean MustExist
+      )
+      {
+        final int CharIndex = Unicode.GetCharIndex(CharCode, MustExist);
+        return
+            CharIndex >= 0 ?
+                GetCharByIndex(CharIndex)
+            :
+                null;
+      } /*GetCharByCode*/
+
+    public static boolean CharNameMatches
+      (
+        int CharCode,
+        String[] MatchWords /* as returned by SplitWords on your search string */
+      )
+      /* does the character with the specified code have a name matching
+        the given strings. */
+      {
+        String[] NameWords =
+            CharNamesSplitByCode != null ?
+                CharNamesSplitByCode.get(CharCode)
+            :
+                null;
+        if (NameWords == null)
+          {
+            if (CharNamesSplitByCode == null)
+              {
+                CharNamesSplitByCode = new SparseArray<String[]>(Unicode.NrChars);
+              } /*if*/
+            NameWords = SplitWords(GetCharByCode(CharCode, true).Name);
+            CharNamesSplitByCode.put(CharCode, NameWords);
+          } /*if*/
+        boolean Matching;
+        for (int i = 0, j = 0;;)
+          {
+            if (i == MatchWords.length)
+              {
+                Matching = true;
+                break;
+              } /*if*/
+            if (j == NameWords.length)
+              {
+                Matching = false;
+                break;
+              } /*if*/
+            if (NameWords[j].contains(MatchWords[i]))
+              {
+                ++i;
+              } /*if*/
+            ++j;
+          } /*for*/
+        return
+            Matching;
+      } /*CharNameMatches*/
 
   } /*TableReader*/;
