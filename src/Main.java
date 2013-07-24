@@ -229,6 +229,8 @@ public class Main extends android.app.Activity
       } /*ShowModeEnum*/;
 
     class ShowModeItem
+      /* just to hold toString method which cannot go in ShowModeEnum because
+        latter is static */
       {
         public final ShowModeEnum ModeEnum;
         public final int PromptResID;
