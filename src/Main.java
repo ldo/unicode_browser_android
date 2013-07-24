@@ -46,7 +46,7 @@ public class Main extends android.app.Activity
     private CategoryItemAdapter CategoryList;
     private android.widget.EditText SearchEntry;
     private android.widget.ProgressBar Progress;
-    private ThingsToShow NowShowing;
+    private ShowModeEnum NowShowing;
     private int ShowCategory;
     private ListView CharListView, OtherNamesView, LikeCharsView;
     private CharItemAdapter MainCharList, LikeCharList;
@@ -89,7 +89,7 @@ public class Main extends android.app.Activity
           (
                     !ShowingChar
                 ||
-                    NowShowing == ThingsToShow.Categories && ShowCategory == DetailCategory
+                    NowShowing == ShowModeEnum.Categories && ShowCategory == DetailCategory
             ?
                 View.INVISIBLE
             :
@@ -104,7 +104,7 @@ public class Main extends android.app.Activity
       {
         ShowCategory = NewCategory;
         CategoryListView.setSelection(ShowCategory);
-        SetShowing(ThingsToShow.Categories);
+        SetShowingMode(ShowModeEnum.Categories);
         RebuildMainCharList();
       } /*SetShowingCategory*/
 
@@ -119,7 +119,7 @@ public class Main extends android.app.Activity
             long ID
           )
           {
-            SetShowing((ThingsToShow)Parent.getAdapter().getItem(Position));
+            SetShowingMode(((ShowModeItem)Parent.getAdapter().getItem(Position)).ModeEnum);
           } /*onItemSelected*/
 
         public void onNothingSelected
@@ -190,31 +190,29 @@ public class Main extends android.app.Activity
 
       } /*CategoryItemAdapter*/;
 
-    enum ThingsToShow
+    enum ShowModeEnum
       {
-        Categories(0, R.string.category_prompt),
-        Searching(1, R.string.search_prompt),
-        Favourites(2, R.string.faves_prompt),
+        Categories(0),
+        Searching(1),
+        Favourites(2),
         ;
 
-        public final int Index, PromptResID;
+        public final int Index;
 
-        private ThingsToShow
-          (
-            int Index,
-            int PromptResID
-          )
-          {
-            this.Index = Index;
-            this.PromptResID = PromptResID;
-          } /*ThingsToShow*/
-
-        public static ThingsToShow Val
+        private ShowModeEnum
           (
             int Index
           )
           {
-            final ThingsToShow Result;
+            this.Index = Index;
+          } /*ShowModeEnum*/
+
+        public static ShowModeEnum Val
+          (
+            int Index
+          )
+          {
+            final ShowModeEnum Result;
             for (int i = 0;;)
               {
                 if (values()[i].Index == Index)
@@ -228,9 +226,35 @@ public class Main extends android.app.Activity
                 Result;
           } /*Val*/
 
-      } /*ThingsToShow*/;
+      } /*ShowModeEnum*/;
 
-    class ShowItemAdapter extends ArrayAdapter<ThingsToShow>
+    class ShowModeItem
+      {
+        public final ShowModeEnum ModeEnum;
+        public final int PromptResID, ItemResID;
+
+        public ShowModeItem
+          (
+            ShowModeEnum ModeEnum,
+            int PromptResID,
+            int ItemResID
+          )
+          {
+            this.ModeEnum = ModeEnum;
+            this.PromptResID = PromptResID;
+            this.ItemResID = ItemResID;
+          } /*ShowModeEnum*/
+
+        @Override
+        public String toString()
+          {
+            return
+                getString(ItemResID);
+          } /*toString*/
+
+      } /*ShowModeItem*/;
+
+    class ShowItemAdapter extends ArrayAdapter<ShowModeItem>
       {
         static final int ResID = android.R.layout.simple_dropdown_item_1line;
         final LayoutInflater TemplateInflater = Main.this.getLayoutInflater();
@@ -253,7 +277,7 @@ public class Main extends android.app.Activity
               {
                 TheView = TemplateInflater.inflate(ResID, null);
               } /*if*/
-            final ThingsToShow ThisItem = getItem(Position);
+            final ShowModeItem ThisItem = getItem(Position);
             ((TextView)TheView.findViewById(android.R.id.text1)).setText
               (
                 ThisItem.PromptResID
@@ -264,33 +288,33 @@ public class Main extends android.app.Activity
 
       } /*ShowItemAdapter*/;
 
-    void SetShowing
+    void SetShowingMode
       (
-        ThingsToShow What
+        ShowModeEnum What
       )
       {
         NowShowing = What;
-        if (What != ThingsToShow.Searching)
+        if (What != ShowModeEnum.Searching)
           {
             CancelBG();
           } /*if*/
         CategoryListView.setVisibility
           (
-            What == ThingsToShow.Categories ?
+            What == ShowModeEnum.Categories ?
                 View.VISIBLE
             :
                 View.INVISIBLE
           );
         SearchEntry.setVisibility
           (
-            What == ThingsToShow.Searching ?
+            What == ShowModeEnum.Searching ?
                 View.VISIBLE
             :
                 View.INVISIBLE
           );
         ShowSelector.setSelection(NowShowing.Index);
         SetShowDetailCategory();
-        if (NowShowing == ThingsToShow.Searching)
+        if (NowShowing == ShowModeEnum.Searching)
           {
             QueueRebuildMainCharList(SearchEntry.getText().toString());
           }
@@ -298,7 +322,7 @@ public class Main extends android.app.Activity
           {
             RebuildMainCharList(null, false);
           } /*if*/
-      } /*SetShowing*/
+      } /*SetShowingMode*/
 
     class CharItemAdapter extends ArrayAdapter<CharInfo>
       {
@@ -430,7 +454,7 @@ public class Main extends android.app.Activity
                   } /*for*/
               } /*if*/
           }
-        else if (NowShowing == ThingsToShow.Favourites)
+        else if (NowShowing == ShowModeEnum.Favourites)
           {
             if (Favourites != null)
               {
@@ -684,7 +708,7 @@ public class Main extends android.app.Activity
                                 if (Removed)
                                   {
                                     Favourites = NewFavourites;
-                                    if (NowShowing == ThingsToShow.Favourites)
+                                    if (NowShowing == ShowModeEnum.Favourites)
                                       {
                                         RebuildMainCharList();
                                       } /*if*/
@@ -736,7 +760,7 @@ public class Main extends android.app.Activity
                                       {
                                         Favourites[i++] = CharCode;
                                       } /*for*/
-                                    if (NowShowing == ThingsToShow.Favourites)
+                                    if (NowShowing == ShowModeEnum.Favourites)
                                       {
                                         RebuildMainCharList();
                                       } /*if*/
@@ -864,10 +888,9 @@ public class Main extends android.app.Activity
           {
             ShowSelector = (Spinner)findViewById(R.id.show_prompt);
             final ShowItemAdapter ToShow = new ShowItemAdapter();
-            for (ThingsToShow ShowThis : ThingsToShow.values())
-              {
-                ToShow.add(ShowThis);
-              } /*for*/
+            ToShow.add(new ShowModeItem(ShowModeEnum.Categories, R.string.category_prompt, R.string.categories_item));
+            ToShow.add(new ShowModeItem(ShowModeEnum.Searching, R.string.search_prompt, R.string.search_item));
+            ToShow.add(new ShowModeItem(ShowModeEnum.Favourites, R.string.faves_prompt, R.string.faves_item));
             ShowSelector.setAdapter(ToShow);
             ShowSelector.setOnItemSelectedListener(new ShowingSelect());
           }
@@ -1035,7 +1058,7 @@ public class Main extends android.app.Activity
         RestoreState();
         if (ToRestore == null)
           {
-            SetShowing(ThingsToShow.Categories);
+            SetShowingMode(ShowModeEnum.Categories);
           } /*if*/
       } /*onCreate*/
 
@@ -1087,7 +1110,7 @@ public class Main extends android.app.Activity
         SetShowingCategory(ToRestore.getInt("category"));
         final int ToShow = ToRestore.getInt("display_mode");
         ShowSelector.setSelection(ToShow);
-        SetShowing(ThingsToShow.Val(ToShow));
+        SetShowingMode(ShowModeEnum.Val(ToShow));
         CategoryListView.post /* so it runs after OnItemSelectedListener would be triggered */
           (
             new Runnable()

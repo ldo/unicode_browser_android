@@ -4,8 +4,13 @@
     <string name="window_title">Unicode %s Browser</string>
 
     <string name="category_prompt">Category:</string>
-    <string name="search_prompt">Matching:</string>
+    <string name="search_prompt">Name Like:</string>
     <string name="faves_prompt">Favourites</string>
+
+    <string name="categories_item">Categories</string>
+    <string name="search_item">Search</string>
+    <string name="faves_item">Favourites</string>
+
     <string name="show">Show</string>
     <string name="aka">AKA:</string>
 
