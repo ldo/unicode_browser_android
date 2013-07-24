@@ -67,6 +67,8 @@ class DataWriter :
         self.categories = []
         self.namestrings = b""
         self.nrstrings = 0
+        self.longest_name = ""
+        self.longest_other_name = ""
         self.othernames = b""
         self.likechars = b""
         self.version_start = self.add_string(version)
@@ -125,6 +127,14 @@ class DataWriter :
             self.firstcharcode = code
             self.startindex = len(self.chars)
         #end if
+        if len(name) > len(self.longest_name) :
+            self.longest_name = name
+        #end if
+        for s in othernames :
+            if len(s) > len(self.longest_other_name) :
+                self.longest_other_name = s
+            #end if
+        #end for
         self.prevcharcode = code
         namestart = self.add_string(name)
         othernamesstart = len(self.othernames)
@@ -174,13 +184,17 @@ class DataWriter :
         #end for
         sys.stdout.write \
           (
-                "chars: %(nrchars)d, categories: %(nrcategories)d, strings: %(nrstrings)d/%(lenstrings)d bytes, runs: %(nrruns)d\n"
+                "chars: %(nrchars)d, categories: %(nrcategories)d, strings: %(nrstrings)d/%(lenstrings)d bytes, longest name “%(longest_name)s”(%(longest_name_len)d), longest other name “%(longest_other_name)s”(%(longest_other_name_len)d), runs: %(nrruns)d\n"
             %
                 {
                     "nrchars" : len(self.chars),
                     "nrcategories" : len(self.categories),
                     "nrstrings" : self.nrstrings,
                     "lenstrings" : len(self.namestrings),
+                    "longest_name" : self.longest_name,
+                    "longest_name_len" : len(self.longest_name),
+                    "longest_other_name" : self.longest_other_name,
+                    "longest_other_name_len" : len(self.longest_other_name),
                     "nrruns" : len(self.char_runs),
                 }
           )
