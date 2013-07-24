@@ -1,9 +1,8 @@
-package nz.gen.geek_central.unicode_browser;
+package nz.gen.geek_central.android_useful;
 /*
-    Unicode Browser app--implementation of popup action menus.
-    Tapping on an item performs the action and dismisses the menu;
-    or the user may press the back key to dismiss the menu without
-    performing an action.
+    Implementation of simple popup action menus. Tapping on an item
+    performs the action and dismisses the menu; or the user may press
+    the back key to dismiss the menu without performing an action.
 
     Copyright 2013 Lawrence D'Oliveiro <ldo@geek-central.gen.nz>.
 

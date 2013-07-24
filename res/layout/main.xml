@@ -83,7 +83,7 @@
                 android:text=" "
                 style="@style/text_common"
             />
-            <nz.gen.geek_central.unicode_browser.SquashyText
+            <nz.gen.geek_central.android_useful.SquashyText
                 android:id="@+id/details"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -96,7 +96,7 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal"
         >
-            <nz.gen.geek_central.unicode_browser.SquashyText
+            <nz.gen.geek_central.android_useful.SquashyText
                 android:id="@+id/category"
                 android:layout_width="200dp"
                 android:layout_height="wrap_content"

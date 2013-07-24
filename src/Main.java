@@ -27,6 +27,8 @@ import android.widget.ArrayAdapter;
 import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.Spinner;
+import nz.gen.geek_central.android_useful.UnicodeUseful;
+import nz.gen.geek_central.android_useful.PopupMenu;
 public class Main extends android.app.Activity
   {
     private final android.os.Handler BGTask = new android.os.Handler();

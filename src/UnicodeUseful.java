@@ -1,8 +1,7 @@
-package nz.gen.geek_central.unicode_browser;
+package nz.gen.geek_central.android_useful;
 /*
-    Unicode Browser app--useful Unicode-related stuff.
-    This includes handling of UTF-16 encoding/decoding as required
-    by Java strings.
+    Useful Unicode-related stuff. This includes handling of UTF-16
+    encoding/decoding as required by Java strings.
 
     Copyright 2013 Lawrence D'Oliveiro <ldo@geek-central.gen.nz>.
 

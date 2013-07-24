@@ -1,8 +1,8 @@
-package nz.gen.geek_central.unicode_browser;
+package nz.gen.geek_central.android_useful;
 /*
-    Unicode Browser app--custom fixed-max-width text display, which
-    adjusts the text horizontal scaling so the entire text remains
-    visible without truncation.
+    Custom fixed-max-width text display, which adjusts the text
+    horizontal scaling so the entire text remains visible without
+    truncation.
 
     Copyright 2013 Lawrence D'Oliveiro <ldo@geek-central.gen.nz>.
 
