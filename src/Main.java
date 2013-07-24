@@ -873,7 +873,7 @@ public class Main extends android.app.Activity
           }
         if (ToRestore == null)
           {
-            ShowCategory = CategoryCodes.get("C0 Controls and Basic Latin (Basic Latin)"); /* default */
+            ShowCategory = CategoryCodes.get("Basic Latin"); /* default */
           } /*if*/
           {
             CategoryListView = (Spinner)findViewById(R.id.category_selector);

@@ -235,6 +235,12 @@ out_file = "res/raw/unicode.rtttl"
   # for list of extensions which are not compressed
 hexdigits = r"[0-9A-F]+" # file always has them in uppercase
 
+remap_categories = \
+    { # split some categories because I don’t like lumping control characters together with printable ones
+        "C0 Controls and Basic Latin (Basic Latin)" : ["C0 Controls", "Basic Latin"],
+        "C1 Controls and Latin-1 Supplement (Latin-1 Supplement)" : ["C1 Controls", "Latin-1 Supplement"],
+    }
+
 chars = {}
 categories = []
 categories_used = set()
@@ -275,11 +281,17 @@ with open(file = data_file, errors = "ignore") as data :
                 #end if
             #end if
             if include_it :
-                categories_used.add(char_category)
+                remap = remap_categories.get(char_category)
+                if remap != None :
+                    use_char_category = remap[charcode & 127 >= 32 and charcode != 127]
+                else :
+                    use_char_category = char_category
+                #end if
+                categories_used.add(use_char_category)
                 chars[charcode] = \
                     {
                         "name" : charname,
-                        "category" : char_category,
+                        "category" : use_char_category,
                         "other_names" : samechar,
                         "similar" : set(likechar),
                     }
@@ -292,7 +304,7 @@ with open(file = data_file, errors = "ignore") as data :
                         ("IGNORE", "")[include_it],
                         charcode,
                         charname,
-                        char_category,
+                        use_char_category,
                         "; ".join(samechar),
                         "; ".join("U+%04X" % c for c in likechar),
                     )
@@ -338,9 +350,11 @@ with open(file = data_file, errors = "ignore") as data :
             pieces = re.search("^(" + hexdigits + ")\t(.+)\t(" + hexdigits + ")$", line[3:])
             if pieces != None :
                 char_category = pieces.group(2)
-                if char_category not in categories :
-                    categories.append(char_category)
-                #end if
+                for this_char_category in remap_categories.get(char_category, [char_category]) :
+                    if this_char_category not in categories :
+                        categories.append(this_char_category)
+                    #end if
+                #end for
             #end if
         else :
             pass # sys.stdout.write("Ignore line: %s\n" % repr(line))
