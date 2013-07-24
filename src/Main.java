@@ -34,8 +34,44 @@ import static nz.gen.geek_central.unicode_browser.TableReader.CharInfo;
 import static nz.gen.geek_central.unicode_browser.TableReader.Unicode;
 public class Main extends android.app.Activity
   {
-    private final android.os.Handler BGTask = new android.os.Handler();
-    private Runnable CurrentBG = null;
+    private final android.os.Handler BGRunner = new android.os.Handler();
+
+    private abstract class BGTask implements Runnable
+      {
+        public BGTask()
+          /* must be invoked by subclass! */
+          {
+            CurrentBG = this; /* effectively cancel any previous task */
+            BGRunner.post(CurrentBG);
+          } /*BGTask*/
+
+        public abstract boolean Run();
+          /* return true iff want to be invoked again */
+
+        public void run()
+          {
+            if (CurrentBG == this)
+              {
+                if (Run())
+                  {
+                    BGRunner.post(this);
+                  }
+                else
+                  {
+                    CancelBG();
+                  } /*if*/
+              } /*if*/
+          } /*run*/
+
+      } /*BGTask*/;
+
+    private void CancelBG()
+      {
+        Progress.setVisibility(View.INVISIBLE);
+        CurrentBG = null;
+      } /*CancelBG*/
+
+    private BGTask CurrentBG = null;
 
     private java.util.Map<String, Integer> CategoryCodes;
 
@@ -401,6 +437,15 @@ public class Main extends android.app.Activity
 
     class CharSelect implements AdapterView.OnItemClickListener
       {
+        public final boolean ScrollOnSelect;
+
+        public CharSelect
+          (
+            boolean ScrollOnSelect
+          )
+          {
+            this.ScrollOnSelect = ScrollOnSelect;
+          } /*CharSelect*/
 
         public void onItemClick
           (
@@ -410,7 +455,7 @@ public class Main extends android.app.Activity
             long ID
           )
           {
-            ShowCharDetails((CharInfo)Parent.getAdapter().getItem(Position));
+            ShowCharDetails((CharInfo)Parent.getAdapter().getItem(Position), ScrollOnSelect);
           } /*onItemClick*/
 
       } /*CharSelect*/;
@@ -489,13 +534,7 @@ public class Main extends android.app.Activity
 
     private final int MaxPerBGRun = 100;
 
-    private void CancelBG()
-      {
-        Progress.setVisibility(View.INVISIBLE);
-        CurrentBG = null;
-      } /*CancelBG*/
-
-    private class BGCharListRebuilder implements Runnable
+    private class BGCharListRebuilder extends BGTask
       {
       /* for doing time-consuming character matches in background to keep interface responsive */
         private final String[] Matching;
@@ -508,6 +547,7 @@ public class Main extends android.app.Activity
             String Matching
           )
           {
+            super();
             this.Matching = TableReader.SplitWords(Matching);
             CurIndex = 0;
             MainCharList.clear();
@@ -515,54 +555,45 @@ public class Main extends android.app.Activity
             FirstCall = true;
           } /*BGCharListRebuilder*/
 
-        public void run()
+        @Override
+        public boolean Run()
           {
-            if (CurrentBG == this)
+            if (System.currentTimeMillis() - StartTime > 500)
               {
-                if (System.currentTimeMillis() - StartTime > 500)
-                  {
-                    Progress.setVisibility(View.VISIBLE);
-                  } /*if*/
-                final int DoThisRun = Math.min(Unicode.NrChars - CurIndex, MaxPerBGRun);
-                MainCharList.setNotifyOnChange(false);
-                for
-                  (
-                    int i = 0;
-                    i < MaxPerBGRun && CurIndex < Unicode.NrChars;
-                    ++i, ++CurIndex
-                  )
-                  {
-                    if (TableReader.CharNameMatches(Unicode.GetCharCode(CurIndex), Matching))
-                      {
-                        MainCharList.add(TableReader.GetCharByIndex(CurIndex));
-                      } /*if*/
-                  } /*for*/
-                MainCharList.notifyDataSetChanged();
-                if (FirstCall)
-                  {
-                    CharListView.setSelection(0); /* only works after notifyDataSetChanged! */
-                    FirstCall = false;
-                  } /*if*/
-                if (CurIndex < Unicode.NrChars)
-                  {
-                    BGTask.post(this);
-                  }
-                else
-                  {
-                    CancelBG();
-                  } /*if*/
+                Progress.setVisibility(View.VISIBLE);
               } /*if*/
-          } /*run*/
+            final int DoThisRun = Math.min(Unicode.NrChars - CurIndex, MaxPerBGRun);
+            MainCharList.setNotifyOnChange(false);
+            for
+              (
+                int i = 0;
+                i < MaxPerBGRun && CurIndex < Unicode.NrChars;
+                ++i, ++CurIndex
+              )
+              {
+                if (TableReader.CharNameMatches(Unicode.GetCharCode(CurIndex), Matching))
+                  {
+                    MainCharList.add(TableReader.GetCharByIndex(CurIndex));
+                  } /*if*/
+              } /*for*/
+            MainCharList.notifyDataSetChanged();
+            if (FirstCall)
+              {
+                CharListView.setSelection(0); /* only works after notifyDataSetChanged! */
+                FirstCall = false;
+              } /*if*/
+            return
+                CurIndex < Unicode.NrChars;
+          } /*Run*/
 
       } /*BGCharListRebuilder*/;
 
     private void QueueRebuildMainCharList
       (
-        final String Matching /* won't be null */
+        String Matching /* won't be null */
       )
       {
-        CurrentBG = new BGCharListRebuilder(Matching);
-        BGTask.post(CurrentBG);
+        new BGCharListRebuilder(Matching);
       } /*QueueRebuildMainCharList*/
 
     private void RebuildMainCharList()
@@ -570,9 +601,58 @@ public class Main extends android.app.Activity
         RebuildMainCharList(null, false);
       } /*RebuildMainCharList*/
 
+    private class BGCharSelector extends BGTask
+      {
+        private final int CharCode;
+        private int CurIndex;
+
+        public BGCharSelector
+          (
+            int CharCode
+          )
+          {
+            super();
+            this.CharCode = CharCode;
+            CurIndex = 0;
+          } /*BGCharSelector*/
+
+        @Override
+        public boolean Run()
+          {
+            boolean Found = false;
+            for (int i = 0;;)
+              {
+                if (i == MaxPerBGRun || CurIndex == MainCharList.getCount())
+                    break;
+                if (MainCharList.getItem(CurIndex).Code == CharCode)
+                  {
+                    final int CharIndex = CurIndex;
+                    CharListView.post
+                      (
+                        new Runnable()
+                          {
+                            public void run()
+                              {
+                                CharListView.setSelection(CharIndex);
+                              } /*run*/
+                          } /*Runnable*/
+                      );
+                    Found = true;
+                    break;
+                  } /*if*/
+                ++i;
+                ++CurIndex;
+              } /*for*/
+            return
+                !Found && CurIndex < MainCharList.getCount();
+          } /*Run*/
+
+      } /*BGCharSelector*/;
+
     private void ShowCharDetails
       (
-        CharInfo TheChar
+        CharInfo TheChar,
+        boolean ScrollToIt
       )
       {
         if (TheChar != null)
@@ -607,6 +687,10 @@ public class Main extends android.app.Activity
               } /*for*/
             LikeCharList.notifyDataSetChanged();
             LikeCharsView.setSelection(0); /* only works after notifyDataSetChanged! */
+            if (ScrollToIt && NowShowing == ShowModeEnum.Categories && CurrentBG == null)
+              {
+                new BGCharSelector(CurChar);
+              } /*if*/
           }
         else
           {
@@ -852,7 +936,7 @@ public class Main extends android.app.Activity
                                   {
                                     TheChar = TableReader.GetCharByCode(CollectedText.get(0), false);
                                   } /*if*/
-                                ShowCharDetails(TheChar);
+                                ShowCharDetails(TheChar, true);
                               } /*if*/
                           } /*run*/
                       } /*Runnable*/
@@ -980,14 +1064,14 @@ public class Main extends android.app.Activity
         CharListView = (ListView)findViewById(R.id.main_list);
         MainCharList = new CharItemAdapter(R.layout.char_list_item);
         CharListView.setAdapter(MainCharList);
-        CharListView.setOnItemClickListener(new CharSelect());
+        CharListView.setOnItemClickListener(new CharSelect(false));
         OtherNamesList = new NameItemAdapter();
         OtherNamesView = (ListView)findViewById(R.id.names_list);
         OtherNamesView.setAdapter(OtherNamesList);
         LikeCharsView = (ListView)findViewById(R.id.like_list);
         LikeCharList = new CharItemAdapter(R.layout.also_char_list_item);
         LikeCharsView.setAdapter(LikeCharList);
-        LikeCharsView.setOnItemClickListener(new CharSelect());
+        LikeCharsView.setOnItemClickListener(new CharSelect(true));
         LiteralDisplay = (TextView)findViewById(R.id.big_literal);
         DetailsDisplay = (TextView)findViewById(R.id.details);
           {
@@ -1009,6 +1093,10 @@ public class Main extends android.app.Activity
                     if (DetailCategory >= 0)
                       {
                         SetShowingCategory(DetailCategory);
+                        if (CurrentBG == null)
+                          {
+                            new BGCharSelector(CurChar);
+                          } /*if*/
                       } /*if*/
                   } /*onClick*/
               }
@@ -1110,7 +1198,7 @@ public class Main extends android.app.Activity
         SetCollectedText(ToRestore.getIntArray("input_text"));
           {
             final int CharIndex = Unicode.GetCharIndex(ToRestore.getInt("char"), false);
-            ShowCharDetails(CharIndex >= 0 ? TableReader.GetCharByIndex(CharIndex) : null);
+            ShowCharDetails(CharIndex >= 0 ? TableReader.GetCharByIndex(CharIndex) : null, true);
           }
         SetShowingCategory(ToRestore.getInt("category"));
         final int ToShow = ToRestore.getInt("display_mode");
