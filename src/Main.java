@@ -138,8 +138,21 @@ public class Main extends android.app.Activity
         int NewCategory
       )
       {
+        final AdapterView.OnItemSelectedListener SaveCategoryListener =
+            CategoryListView.getOnItemSelectedListener();
+        CategoryListView.setOnItemSelectedListener(null); /* avoid reentrant calls */
         ShowCategory = NewCategory;
         CategoryListView.setSelection(ShowCategory);
+        CategoryListView.post /* so it runs after OnItemSelectedListener would be triggered */
+          (
+            new Runnable()
+              {
+                public void run()
+                  {
+                    CategoryListView.setOnItemSelectedListener(SaveCategoryListener);
+                  } /*run*/
+              } /*Runnable*/
+          );
         SetShowingMode(ShowModeEnum.Categories);
         RebuildMainCharList();
       } /*SetShowingCategory*/
@@ -334,6 +347,9 @@ public class Main extends android.app.Activity
         ShowModeEnum What
       )
       {
+        final AdapterView.OnItemSelectedListener SaveShowingListener =
+            ShowSelector.getOnItemSelectedListener();
+        ShowSelector.setOnItemSelectedListener(null); /* avoid reentrant calls */
         NowShowing = What;
         if (What != ShowModeEnum.Searching)
           {
@@ -355,6 +371,16 @@ public class Main extends android.app.Activity
           );
         ShowSelector.setSelection(NowShowing.Index);
         SetShowDetailCategory();
+        ShowSelector.post /* so it runs after OnItemSelectedListener would be triggered */
+          (
+            new Runnable()
+              {
+                public void run()
+                  {
+                    ShowSelector.setOnItemSelectedListener(SaveShowingListener);
+                  } /*run*/
+              } /*Runnable*/
+          );
         if (NowShowing == ShowModeEnum.Searching)
           {
             QueueRebuildMainCharList(SearchEntry.getText().toString());
@@ -655,6 +681,7 @@ public class Main extends android.app.Activity
         boolean ScrollToIt
       )
       {
+        boolean ScrollToChar = false;
         if (TheChar != null)
           {
             CurChar = TheChar.Code;
@@ -687,9 +714,9 @@ public class Main extends android.app.Activity
               } /*for*/
             LikeCharList.notifyDataSetChanged();
             LikeCharsView.setSelection(0); /* only works after notifyDataSetChanged! */
-            if (ScrollToIt && NowShowing == ShowModeEnum.Categories && CurrentBG == null)
+            if (ScrollToIt && NowShowing == ShowModeEnum.Categories)
               {
-                new BGCharSelector(CurChar);
+                ScrollToChar = true;
               } /*if*/
           }
         else
@@ -703,6 +730,11 @@ public class Main extends android.app.Activity
             LikeCharList.clear();
           } /*if*/
         SetShowDetailCategory();
+        if (ScrollToChar && CurrentBG == null)
+          {
+          /* must do after SetShowDetailCategory to avoid being cancelled */
+            new BGCharSelector(CurChar);
+          } /*if*/
       } /*ShowCharDetails*/
 
     private int[] GetCollectedText()
@@ -1095,7 +1127,17 @@ public class Main extends android.app.Activity
                         SetShowingCategory(DetailCategory);
                         if (CurrentBG == null)
                           {
-                            new BGCharSelector(CurChar);
+                            final int TheChar = CurChar;
+                            CharListView.post /* ensure it runs after ShowingSelect.onItemSelected */
+                              (
+                                new Runnable()
+                                  {
+                                    public void run()
+                                      {
+                                        new BGCharSelector(TheChar);
+                                      } /*run*/
+                                  } /*Runnable*/
+                              );
                           } /*if*/
                       } /*if*/
                   } /*onClick*/
