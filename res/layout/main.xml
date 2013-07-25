@@ -54,6 +54,8 @@
         android:layout_height="0dp"
         android:layout_weight="40"
     />
+    <!-- following TextView set as EmptyView for above list; must live in same layout,
+        just hidden with visibility="gone" -->
     <TextView
         android:id="@+id/main_list_empty"
         android:layout_height="0dp"
