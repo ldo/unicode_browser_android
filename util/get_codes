@@ -1,12 +1,13 @@
 #!/usr/bin/python3
 #+
-# This script converts the system-installed Unicode tables into a 
-# binary data file that is compiled into the Android app.
-# On Debian, the Unicode tables are installed as part of the “unicode-data”
-# package, and are found in the /usr/share/unicode directory.
-# Otherwise, you can download the latest version from unicode.org
-# at <http://www.unicode.org/Public/UCD/latest/ucd/>, in particular
-# <http://www.unicode.org/Public/UCD/latest/ucd/NamesList.txt>.
+# This script converts NamesList.txt from the Unicode character
+# database into a binary data file that is compiled into the Android
+# app. The UCD is downloadable from
+# <http://www.unicode.org/Public/UCD/latest/ucd/>; in particular
+# NamesList.txt is available at
+# <http://www.unicode.org/Public/UCD/latest/ucd/NamesList.txt>. Or on
+# a Debian system, install the unicode-data package, and the files
+# will be in the /usr/share/unicode directory.
 #
 # This script is not run automatically as part of the build process,
 # but is invoked manually. This is to ensure consistent builds, in
@@ -226,7 +227,14 @@ class DataWriter :
 
 #end DataWriter
 
-data_file = "/usr/share/unicode/NamesList.txt"
+#+
+# Mainline
+#-
+
+if len(sys.argv) != 2 :
+    raise RuntimeError("usage: %s NamesList.txt" % sys.argv[0])
+#end if
+data_file = sys.argv[1]
 versionstr = "@@@\tThe Unicode Standard "
 out_file = "res/raw/unicode.rtttl"
   # choose some suitable meaningless file extension to disable compression (file is too big to
