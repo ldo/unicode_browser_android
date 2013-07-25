@@ -22,6 +22,12 @@
         android:layout_height="wrap_content"
         style="@style/text_common"
     />
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        style="@style/text_common"
+        android:text=" "
+    />
     <nz.gen.geek_central.android_useful.SquashyText
         android:id="@+id/name"
         android:layout_width="wrap_content"
