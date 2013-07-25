@@ -88,7 +88,6 @@ public class Main extends android.app.Activity
     private CharItemAdapter MainCharList, LikeCharList;
     private NameItemAdapter OtherNamesList;
     private TextView NoCharsDisplay, LiteralDisplay, DetailsDisplay, DetailCategoryDisplay;
-    private Button DetailCategoryButton;
     private int CurChar = -1;
     private int DetailCategory = -1;
     private Button AddToText, DeleteFromText;
@@ -117,21 +116,6 @@ public class Main extends android.app.Activity
           } /*toString*/
 
       } /*CategoryItem*/;
-
-    private void SetShowDetailCategory()
-      {
-        final boolean ShowingChar = DetailCategory >= 0;
-        DetailCategoryButton.setVisibility
-          (
-                    !ShowingChar
-                ||
-                    NowShowing == ShowModeEnum.Categories && ShowCategory == DetailCategory
-            ?
-                View.INVISIBLE
-            :
-                View.VISIBLE
-          );
-      } /*SetShowDetailCategory*/
 
     private void SetShowingCategory
       (
@@ -374,7 +358,6 @@ public class Main extends android.app.Activity
           );
         NoCharsDisplay.setText(NowShowing.EmptyStringID);
         ShowSelector.setSelection(NowShowing.Index);
-        SetShowDetailCategory();
         ShowSelector.post /* so it runs after OnItemSelectedListener would be triggered */
           (
             new Runnable()
@@ -733,10 +716,8 @@ public class Main extends android.app.Activity
             OtherNamesList.clear();
             LikeCharList.clear();
           } /*if*/
-        SetShowDetailCategory();
         if (ScrollToChar && CurrentBG == null)
           {
-          /* must do after SetShowDetailCategory to avoid being cancelled */
             new BGCharSelector(CurChar);
           } /*if*/
       } /*ShowCharDetails*/
@@ -1118,8 +1099,7 @@ public class Main extends android.app.Activity
             DetailsDisplay.setOnClickListener(OnDetailClick);
           }
         DetailCategoryDisplay = (TextView)findViewById(R.id.category);
-        DetailCategoryButton = (Button)findViewById(R.id.show_category);
-        DetailCategoryButton.setOnClickListener
+        DetailCategoryDisplay.setOnClickListener
           (
             new View.OnClickListener()
               {

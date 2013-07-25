@@ -120,14 +120,6 @@
                 style="@style/text_common"
                 android:layout_weight="100"
             />
-            <Button
-                android:id="@+id/show_category"
-                android:layout_width="80dp"
-                android:layout_height="wrap_content"
-                android:text="@string/show"
-                style="@style/button_common"
-                android:visibility="invisible"
-            />
         </LinearLayout>
         <ListView
             android:id="@+id/names_list"
