@@ -257,6 +257,9 @@ with open(file = data_file, errors = "ignore") as data :
     char_category = None
     eof = False
     line = data.readline().rstrip()
+    if line.startswith(";") :
+        line = data.readline().rstrip()
+    #end if
     if line.startswith(versionstr) :
         version = line[len(versionstr):]
         sys.stdout.write("Unicode version: “%s”\n" % version)
