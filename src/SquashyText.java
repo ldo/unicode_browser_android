@@ -64,7 +64,7 @@ public class SquashyText extends android.widget.TextView
       )
       {
         final float SaveTextScaleX = getTextScaleX();
-        setTextScaleX(Math.min(getWidth() / getPaint().measureText(getText().toString() + " "), 1.0f));
+        setTextScaleX(Math.min(getWidth() / getPaint().measureText(getText().toString() + "W"), 1.0f));
         super.onDraw(g);
         setTextScaleX(SaveTextScaleX);
       } /*onDraw*/
