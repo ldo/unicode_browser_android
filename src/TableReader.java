@@ -79,16 +79,21 @@ public class TableReader
           )
           /* extracts the string at the specified offset within the names table. */
           {
-            final int Strlen = (int)ContentsBuf.get(NameStringsStart + Offset) & 255;
-            final StringBuilder Result = new StringBuilder(Strlen);
-            Result.setLength(Strlen);
-            for (int i = 1; i <= Strlen; ++i)
+            try
               {
-              /* Characters will be 7-bit ASCII only */
-                Result.setCharAt(i - 1, (char)((short)ContentsBuf.get(NameStringsStart + Offset + i) & 255));
-              } /*for*/
-            return
-                Result.toString();
+                return
+                    new String
+                      (
+                        /*data =*/ Contents,
+                        /*offset =*/ NameStringsStart + Offset + 1,
+                        /*byteCount =*/ (int)Contents[NameStringsStart + Offset] & 255,
+                        /*charSetName =*/ "utf-8"
+                      );
+              }
+            catch (java.io.UnsupportedEncodingException Huh)
+              {
+                throw new RuntimeException(Huh.toString());
+              } /*try*/
           } /*GetString*/
 
         public String GetCategoryName
