@@ -1,6 +1,8 @@
 Unicode Browser is an application for Android for browsing Unicode
 characters. You can examine them by category, or by similarity,
-or search for characters with names containing a specified substring.
+search for characters with names containing specified substrings,
+and save a list of favourites for quick reference. You can also
+copy and paste text between this and other Android applications.
 
 Contents:
     src/ -- Java sources for the Android app
