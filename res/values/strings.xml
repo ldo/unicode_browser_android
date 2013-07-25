@@ -13,7 +13,7 @@
 
     <string name="category_no_chars">How did this happen?</string>
     <string name="search_no_chars">No matches found.</string>
-    <string name="faves_no_chars">Tap a character name to add as a favourite.</string>
+    <string name="faves_no_chars">Tap character name to add as a favourite.</string>
 
     <string name="show">Show</string>
     <string name="aka">AKA:</string>
