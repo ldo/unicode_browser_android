@@ -10,7 +10,6 @@
     </style>
 
     <style name="button_common" parent="text_common">
-        <item name="android:background">@drawable/button_bg</item>
         <item name="android:textColor">@android:color/primary_text_light</item>
     </style>
 
