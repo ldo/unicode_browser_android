@@ -79,6 +79,7 @@ public class Main extends android.app.Activity
 
     private int[] Favourites = null;
     private Spinner ShowSelector, CategoryListView;
+    private AdapterView.OnItemSelectedListener ShowSelectorListener, CategoryListViewListener;
     private CategoryItemAdapter CategoryList;
     private android.widget.EditText SearchEntry;
     private android.widget.ProgressBar Progress;
@@ -122,8 +123,6 @@ public class Main extends android.app.Activity
         int NewCategory
       )
       {
-        final AdapterView.OnItemSelectedListener SaveCategoryListener =
-            CategoryListView.getOnItemSelectedListener();
         CategoryListView.setOnItemSelectedListener(null); /* avoid reentrant calls */
         ShowCategory = NewCategory;
         CategoryListView.setSelection(ShowCategory);
@@ -133,7 +132,7 @@ public class Main extends android.app.Activity
               {
                 public void run()
                   {
-                    CategoryListView.setOnItemSelectedListener(SaveCategoryListener);
+                    CategoryListView.setOnItemSelectedListener(CategoryListViewListener);
                   } /*run*/
               } /*Runnable*/
           );
@@ -334,8 +333,6 @@ public class Main extends android.app.Activity
         ShowModeEnum What
       )
       {
-        final AdapterView.OnItemSelectedListener SaveShowingListener =
-            ShowSelector.getOnItemSelectedListener();
         ShowSelector.setOnItemSelectedListener(null); /* avoid reentrant calls */
         NowShowing = What;
         if (What != ShowModeEnum.Searching)
@@ -364,7 +361,7 @@ public class Main extends android.app.Activity
               {
                 public void run()
                   {
-                    ShowSelector.setOnItemSelectedListener(SaveShowingListener);
+                    ShowSelector.setOnItemSelectedListener(ShowSelectorListener);
                   } /*run*/
               } /*Runnable*/
           );
@@ -998,7 +995,8 @@ public class Main extends android.app.Activity
             ToShow.add(new ShowModeItem(ShowModeEnum.Searching, R.string.search_prompt, R.string.search_item));
             ToShow.add(new ShowModeItem(ShowModeEnum.Favourites, R.string.faves_prompt, R.string.faves_item));
             ShowSelector.setAdapter(ToShow);
-            ShowSelector.setOnItemSelectedListener(new ShowingSelect());
+            ShowSelectorListener = new ShowingSelect();
+            ShowSelector.setOnItemSelectedListener(ShowSelectorListener);
           }
         if (ToRestore == null)
           {
@@ -1019,7 +1017,8 @@ public class Main extends android.app.Activity
               {
                 CategoryListView.setSelection(ShowCategory);
               } /*if*/
-            CategoryListView.setOnItemSelectedListener(new CategorySelect());
+            CategoryListViewListener = new CategorySelect();
+            CategoryListView.setOnItemSelectedListener(CategoryListViewListener);
           }
         SearchEntry = (android.widget.EditText)findViewById(R.id.search_entry);
         SearchEntry.addTextChangedListener
@@ -1214,44 +1213,13 @@ public class Main extends android.app.Activity
       )
       {
         super.onRestoreInstanceState(ToRestore);
-      /* bit of trickiness to avoid OnItemSelectedListeners being called later
-        and overriding restoration of previous selections */
-        final AdapterView.OnItemSelectedListener SaveShowingListener =
-            ShowSelector.getOnItemSelectedListener();
-        final AdapterView.OnItemSelectedListener SaveCategoryListener =
-            CategoryListView.getOnItemSelectedListener();
-        ShowSelector.setOnItemSelectedListener(null);
-        CategoryListView.setOnItemSelectedListener(null);
-          /* avoid listener being triggered by restoration of state */
         SetCollectedText(ToRestore.getIntArray("input_text"));
           {
             final int CharIndex = Unicode.GetCharIndex(ToRestore.getInt("char"), false);
             ShowCharDetails(CharIndex >= 0 ? TableReader.GetCharByIndex(CharIndex) : null, true);
           }
         SetShowingCategory(ToRestore.getInt("category"));
-        final int ToShow = ToRestore.getInt("display_mode");
-        ShowSelector.setSelection(ToShow);
-        SetShowingMode(ShowModeEnum.Val(ToShow));
-        CategoryListView.post /* so it runs after OnItemSelectedListener would be triggered */
-          (
-            new Runnable()
-              {
-                public void run()
-                  {
-                    CategoryListView.setOnItemSelectedListener(SaveCategoryListener);
-                  } /*run*/
-              } /*Runnable*/
-          );
-        ShowSelector.post /* so it runs after OnItemSelectedListener would be triggered */
-          (
-            new Runnable()
-              {
-                public void run()
-                  {
-                    ShowSelector.setOnItemSelectedListener(SaveShowingListener);
-                  } /*run*/
-              } /*Runnable*/
-          );
+        SetShowingMode(ShowModeEnum.Val(ToRestore.getInt("display_mode")));
       } /*onRestoreInstanceState*/
 
     @Override
