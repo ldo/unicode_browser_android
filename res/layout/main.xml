@@ -18,6 +18,7 @@
         <FrameLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_weight="100"
         >
             <Spinner
                 android:id="@+id/category_selector"
@@ -34,7 +35,7 @@
                     android:id="@+id/search_entry"
                     android:layout_width="120dp"
                     android:layout_height="wrap_content"
-                    style="@style/text_opposite"
+                    style="@style/text_editable"
                     android:layout_weight="100"
                 />
                 <ProgressBar

@@ -13,7 +13,7 @@
         <item name="android:textColor">@android:color/primary_text_light</item>
     </style>
 
-    <style name="text_opposite" parent="text_common">
+    <style name="text_editable" parent="text_common">
         <item name="android:textColor">@android:color/primary_text_light</item>
     </style>
     <style name="text_big" parent="text_common">
