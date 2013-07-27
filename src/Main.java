@@ -888,7 +888,6 @@ public class Main extends android.app.Activity
       } /*DetailClickListener*/;
 
     private static final String StateFileName = "state.txt";
-      /* shouldn't be large, so I don't bother compressing it */
 
     private void SaveState()
       /* saves state (currently just favourites) to persistent storage. */

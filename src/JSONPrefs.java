@@ -1,6 +1,9 @@
 package nz.gen.geek_central.android_useful;
 /*
-    Management of persistent settings in JSON format.
+    Management of persistent settings in JSON format. There is support
+    for only limited data types at present--only what I've needed.
+    The assumption is the data will not be large, so the file is not
+    compressed.
 
     Copyright 2013 Lawrence D'Oliveiro <ldo@geek-central.gen.nz>.
 
