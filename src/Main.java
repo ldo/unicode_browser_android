@@ -755,7 +755,7 @@ public class Main extends android.app.Activity
             if (CurChar >= 0)
               {
                 final int TheChar = CurChar;
-                final PopupMenu Popup = new PopupMenu(Main.this);
+                final PopupMenu Popup = new PopupMenu(Main.this, LiteralDisplay);
                 boolean InFaves = false;
                 if (Favourites != null)
                   {
@@ -914,7 +914,7 @@ public class Main extends android.app.Activity
             View TheView
           )
           {
-            final PopupMenu Popup = new PopupMenu(Main.this);
+            final PopupMenu Popup = new PopupMenu(Main.this, CollectedTextView);
             if (CollectedText.size() != 0)
               {
                 Popup.AddItem

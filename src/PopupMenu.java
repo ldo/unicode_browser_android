@@ -1,8 +1,11 @@
 package nz.gen.geek_central.android_useful;
 /*
-    Implementation of simple popup action menus. Tapping on an item
-    performs the action and dismisses the menu; or the user may press
-    the back key to dismiss the menu without performing an action.
+    Implementation of simple popup action menus, using post-Gingerbread
+    PopupMenu class if available, else falling back to an AlertDialog
+    like the Spinner class uses for its popups in pre-Honeycomb.
+    Tapping on an item performs the action and dismisses the menu; or
+    the user may press the back key to dismiss the menu without performing
+    an action.
 
     Copyright 2013 Lawrence D'Oliveiro <ldo@geek-central.gen.nz>.
 
@@ -19,11 +22,11 @@ package nz.gen.geek_central.android_useful;
     the License.
 */
 
-import android.widget.ArrayAdapter;
 public class PopupMenu
   {
     private final android.content.Context ctx;
-    private final ArrayAdapter<PopupAction> MenuItems;
+    private final android.view.View Anchor;
+    private final java.util.ArrayList<PopupAction> MenuItems;
 
     private class PopupAction
       {
@@ -55,15 +58,13 @@ public class PopupMenu
 
     public PopupMenu
       (
-        android.content.Context ctx
+        android.content.Context ctx,
+        android.view.View Anchor
       )
       {
         this.ctx = ctx;
-        this.MenuItems = new ArrayAdapter<PopupAction>
-          (
-            ctx,
-            android.R.layout.simple_dropdown_item_1line
-          );
+        this.Anchor = Anchor;
+        this.MenuItems = new java.util.ArrayList<PopupAction>();
       } /*PopupMenu*/
 
     public PopupMenu AddItem
@@ -93,32 +94,89 @@ public class PopupMenu
       /* returns the number of items in the menu so far. */
       {
         return
-            MenuItems.getCount();
+            MenuItems.size();
       } /*NrItems*/
 
     public void Show()
       /* actually shows the menu and lets the user perform an action. */
       {
-        new android.app.AlertDialog.Builder(ctx)
-            .setSingleChoiceItems
+        android.widget.PopupMenu TryPopup = null;
+        try
+          {
+            TryPopup = new android.widget.PopupMenu(ctx, Anchor);
+          }
+        catch (NoClassDefFoundError TooOld)
+          {
+          } /*try*/
+        if (TryPopup != null)
+          {
+            final android.widget.PopupMenu ThePopup = TryPopup;
+            final java.util.Map<android.view.MenuItem, PopupAction> NewMenuItems =
+                new java.util.HashMap<android.view.MenuItem, PopupAction>(MenuItems.size());
+            final android.view.Menu TheMenu = ThePopup.getMenu();
+            for (PopupAction ThisItem : MenuItems)
+              {
+                NewMenuItems.put
+                  (
+                    TheMenu.add(ThisItem.Name),
+                    ThisItem
+                  );
+              } /*for*/
+            ThePopup.setOnMenuItemClickListener
               (
-                /*adapter =*/ MenuItems,
-                /*checkedItem =*/ -1,
-                /*listener =*/
-                    new android.content.DialogInterface.OnClickListener()
+                new android.widget.PopupMenu.OnMenuItemClickListener()
+                  {
+                    public boolean onMenuItemClick
+                      (
+                        android.view.MenuItem TheMenuItem
+                      )
                       {
-                        public void onClick
-                          (
-                            android.content.DialogInterface Popup,
-                            int WhichItem
-                          )
+                        final PopupAction TheAction = NewMenuItems.get(TheMenuItem);
+                        if (TheAction != null)
                           {
-                            MenuItems.getItem(WhichItem).Invoke();
-                            Popup.dismiss();
-                          } /*onClick*/
-                      } /*DialogInterface.OnClickListener*/
-              )
-            .show();
+                            TheAction.Invoke();
+                            ThePopup.dismiss();
+                          } /*if*/
+                        return
+                            TheAction != null;
+                      } /*onMenuItemClick*/
+                  } /*PopupMenu.OnMenuItemClickListener*/
+              );
+            ThePopup.show();
+          }
+        else
+          {
+            final android.widget.ArrayAdapter<PopupAction> OldMenuItems =
+                new android.widget.ArrayAdapter<PopupAction>
+                  (
+                    ctx,
+                    android.R.layout.simple_dropdown_item_1line
+                  );
+            for (PopupAction ThisItem : MenuItems)
+              {
+                OldMenuItems.add(ThisItem);
+              } /*for*/
+            new android.app.AlertDialog.Builder(ctx)
+                .setSingleChoiceItems
+                  (
+                    /*adapter =*/ OldMenuItems,
+                    /*checkedItem =*/ -1,
+                    /*listener =*/
+                        new android.content.DialogInterface.OnClickListener()
+                          {
+                            public void onClick
+                              (
+                                android.content.DialogInterface Popup,
+                                int WhichItem
+                              )
+                              {
+                                OldMenuItems.getItem(WhichItem).Invoke();
+                                Popup.dismiss();
+                              } /*onClick*/
+                          } /*DialogInterface.OnClickListener*/
+                  )
+                .show();
+          } /*if*/
       } /*Show*/
 
   } /*PopupMenu*/;
