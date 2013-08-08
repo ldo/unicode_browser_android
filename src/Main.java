@@ -973,6 +973,34 @@ public class Main extends android.app.Activity
       } /*TextClickListener*/;
 
     @Override
+    public boolean dispatchKeyEvent
+      (
+        android.view.KeyEvent TheEvent
+      )
+      {
+        boolean Handled = false;
+        if
+          (
+                TheEvent.getAction() == android.view.KeyEvent.ACTION_UP
+            &&
+                TheEvent.getKeyCode() == android.view.KeyEvent.KEYCODE_SEARCH
+          )
+          {
+            if (NowShowing != ShowModeEnum.Searching)
+              {
+                SetShowingMode(ShowModeEnum.Searching);
+              } /*if*/
+            Handled = true;
+          } /*if*/
+        if (!Handled)
+          {
+            Handled = super.dispatchKeyEvent(TheEvent);
+          } /*if*/
+        return
+            Handled;
+      } /*dispatchKeyEvent*/
+
+    @Override
     public void onCreate
       (
         Bundle ToRestore
