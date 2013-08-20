@@ -2,7 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="nz.gen.geek_central.unicode_browser"
     android:versionCode="3"
-    android:versionName="15925.4"
+    android:versionName="15937.0"
 >
     <uses-sdk
         android:minSdkVersion="8"
