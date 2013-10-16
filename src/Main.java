@@ -1052,7 +1052,7 @@ public class Main extends android.app.Activity
           (
             new android.text.TextWatcher()
               {
-                private String Before = SearchEntry.getText().toString();
+                private String Before;
 
                 public void afterTextChanged
                   (
@@ -1088,7 +1088,7 @@ public class Main extends android.app.Activity
                     int AfterCount
                   )
                   {
-                  /* all done in afterTextChanged */
+                    Before = SearchEntry.getText().toString();
                   } /*beforeTextChanged*/
 
                 public void onTextChanged
