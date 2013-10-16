@@ -1060,7 +1060,7 @@ public class Main extends android.app.Activity
                   )
                   {
                   /* have to do the work here, becauseCharSequence arg to beforeTextChanged and
-                    afterTextChanged may not represent entire field contents */
+                    onTextChanged may not represent entire field contents */
                     final String After = TheField.toString();
                     if
                       (
