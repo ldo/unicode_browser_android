@@ -1059,7 +1059,7 @@ public class Main extends android.app.Activity
                     android.text.Editable TheField
                   )
                   {
-                  /* have to do the work here, becauseCharSequence arg to beforeTextChanged and
+                  /* have to do the work here, because CharSequence arg to beforeTextChanged and
                     onTextChanged may not represent entire field contents */
                     final String After = TheField.toString();
                     if
