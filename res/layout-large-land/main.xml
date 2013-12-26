@@ -1,88 +1,83 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="horizontal"
 >
-    <LinearLayout
-        android:layout_width="0dp"
+    <View
+        android:layout_width="5dp"
+        android:layout_height="match_parent"
+        android:background="@drawable/vert_divider"
+        android:layout_centerHorizontal="true"
+        android:id="@+id/_vert_divider"
+    />
+    <Spinner
+        android:id="@+id/show_prompt"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:layout_weight="50"
+        style="@style/spinner_common"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentTop="true"
+    />
+    <FrameLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_toRightOf="@id/show_prompt"
+        android:layout_toLeftOf="@id/_vert_divider"
     >
+        <Spinner
+            android:id="@+id/category_selector"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            style="@style/spinner_common"
+            android:layout_weight="100"
+        />
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
         >
-            <Spinner
-                android:id="@+id/show_prompt"
-                android:layout_width="wrap_content"
+            <EditText
+                android:id="@+id/search_entry"
+                android:layout_width="120dp"
                 android:layout_height="wrap_content"
-                style="@style/spinner_common"
+                style="@style/text_editable"
                 android:layout_weight="100"
             />
-            <FrameLayout
+            <ProgressBar
+                style="@android:style/Widget.ProgressBar.Small"
+                android:id="@+id/progress"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="100"
-            >
-                <Spinner
-                    android:id="@+id/category_selector"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    style="@style/spinner_common"
-                    android:layout_weight="100"
-                />
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                >
-                    <EditText
-                        android:id="@+id/search_entry"
-                        android:layout_width="120dp"
-                        android:layout_height="wrap_content"
-                        style="@style/text_editable"
-                        android:layout_weight="100"
-                    />
-                    <ProgressBar
-                        style="@android:style/Widget.ProgressBar.Small"
-                        android:id="@+id/progress"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="center_vertical"
-                        android:visibility="invisible"
-                    />
-                </LinearLayout>
-            </FrameLayout>
+                android:layout_gravity="center_vertical"
+                android:visibility="invisible"
+            />
         </LinearLayout>
-        <ListView
-            android:id="@+id/main_list"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="40"
-        />
-        <!-- following TextView set as EmptyView for above list; must live in same layout,
-            just hidden with visibility="gone" -->
-        <TextView
-            android:id="@+id/main_list_empty"
-            android:layout_height="0dp"
-            android:layout_width="match_parent"
-            android:layout_weight="40"
-            android:visibility="gone"
-        />
-    </LinearLayout>
-    <View
-        android:layout_width="5dp"
-        android:layout_height="match_parent"
-        android:background="@drawable/vert_divider"
+    </FrameLayout>
+    <ListView
+        android:id="@+id/main_list"
+        android:layout_width="10dp"
+        android:layout_height="0dp"
+        android:layout_below="@id/show_prompt"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentBottom="true"
+        android:layout_toLeftOf="@id/_vert_divider"
+    />
+    <!-- following TextView set as EmptyView for above list; must live in same layout,
+        just hidden with visibility="gone" -->
+    <TextView
+        android:id="@+id/main_list_empty"
+        android:layout_height="0dp"
+        android:layout_width="match_parent"
+        android:layout_weight="40"
+        android:visibility="gone"
     />
     <LinearLayout
         android:layout_width="0dp"
         android:layout_height="match_parent"
         android:orientation="vertical"
         android:layout_weight="50"
+        android:layout_alignParentRight="true"
+        android:layout_toRightOf="@id/_vert_divider"
     >
         <LinearLayout
             android:layout_width="match_parent"
@@ -165,4 +160,4 @@
             />
         </LinearLayout>
     </LinearLayout>
-</LinearLayout>
+</RelativeLayout>
