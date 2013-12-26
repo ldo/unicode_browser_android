@@ -1,5 +1,8 @@
 Feature highlights:
 
+16065.9, 2013 December 27:
+    fix rotation crash on KitKat tablets.
+
 15994.0, 2013 November 30:
     update to Unicode 6.3.0.
 
