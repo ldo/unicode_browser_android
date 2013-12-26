@@ -1,4 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- This used to have LinearLayouts nested 3 deep, but rotation from portrait
+to landscape would then crash in Kitkat. (Oddly, launching in landscape would work fine.)
+Symptoms looked similar to that described in
+<http://stackoverflow.com/questions/20176877/weird-nullpointerexception-in-spinner>.
+Problem avoided by replacing LinearLayout nesting with a RelativeLayout. -->
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
