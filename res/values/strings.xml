@@ -7,6 +7,11 @@
     <string name="search_prompt">Name Like:</string>
     <string name="faves_prompt">Favourites</string>
 
+    <string name="choose_font">Choose Font...</string>
+    <string name="picker_prompt">Select .ttf File</string>
+    <string name="system_font">(System default)</string>
+    <string name="open">Open</string>
+
     <string name="categories_item">Categories</string>
     <string name="search_item">Search</string>
     <string name="faves_item">Favourites</string>

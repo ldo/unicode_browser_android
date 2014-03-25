@@ -2,7 +2,7 @@ package nz.gen.geek_central.unicode_browser;
 /*
     Unicode Browser app--mainline.
 
-    Copyright 2013 Lawrence D'Oliveiro <ldo@geek-central.gen.nz>.
+    Copyright 2013, 2014 Lawrence D'Oliveiro <ldo@geek-central.gen.nz>.
 
     Licensed under the Apache License, Version 2.0 (the "License"); you may not
     use this file except in compliance with the License. You may obtain a copy of
@@ -19,6 +19,8 @@ package nz.gen.geek_central.unicode_browser;
 
 import java.util.ArrayList;
 import android.os.Bundle;
+import android.content.Intent;
+import android.graphics.Typeface;
 import android.view.View;
 import android.view.LayoutInflater;
 import android.widget.TextView;
@@ -32,8 +34,24 @@ import nz.gen.geek_central.android_useful.JSONPrefs;
 import nz.gen.geek_central.android_useful.PopupMenu;
 import static nz.gen.geek_central.unicode_browser.TableReader.CharInfo;
 import static nz.gen.geek_central.unicode_browser.TableReader.Unicode;
-public class Main extends android.app.Activity
+
+public class Main extends ActionActivity
   {
+
+  /* request codes, all arbitrarily assigned */
+    static final int ChooseFontRequest = 1;
+
+    interface RequestResponseAction /* response to an activity result */
+      {
+        public void Run
+          (
+            int ResultCode,
+            Intent Data
+          );
+      } /*RequestResponseAction*/;
+
+    java.util.Map<Integer, RequestResponseAction> ActivityResultActions;
+
     private final android.os.Handler BGRunner = new android.os.Handler();
 
     private abstract class BGTask implements Runnable
@@ -404,7 +422,9 @@ public class Main extends android.app.Activity
               } /*if*/
             final CharInfo ThisItem = getItem(Position);
             ((TextView)TheView.findViewById(R.id.code)).setText(UnicodeUseful.FormatCharCode(ThisItem.Code));
-            ((TextView)TheView.findViewById(R.id.literal)).setText(UnicodeUseful.CharToString(ThisItem.Code));
+            final TextView LiteralView = (TextView)TheView.findViewById(R.id.literal);
+            LiteralView.setText(UnicodeUseful.CharToString(ThisItem.Code));
+            LiteralView.setTypeface(CurFont, Typeface.NORMAL); /* if not already done */
             ((TextView)TheView.findViewById(R.id.name)).setText(ThisItem.Name);
             return
                 TheView;
@@ -444,6 +464,38 @@ public class Main extends android.app.Activity
           } /*getView*/
 
       } /*NameItemAdapter*/;
+
+    Typeface CurFont = null;
+    String CurFontName = null;
+
+    void SetFontName
+      (
+        String NewFontName /* null for system default */
+      )
+      {
+        final Typeface NewFont =
+            NewFontName != null ?
+                Typeface.createFromFile(NewFontName)
+            :
+                Typeface.DEFAULT;
+        if (NewFont != null)
+          {
+            CurFont = NewFont;
+            CurFontName = NewFontName;
+            for
+              (
+                int FieldID : new int[]
+                  {
+                    R.id.big_literal,
+                    R.id.collected_text,
+                  }
+              )
+              {
+                ((TextView)findViewById(FieldID)).setTypeface(CurFont, Typeface.NORMAL);
+              } /*for*/
+            MainCharList.notifyDataSetChanged(); /* need to ensure literals in list use new font as well */
+          } /*if*/
+      } /*SetFontName*/
 
     class CharSelect implements AdapterView.OnItemClickListener
       {
@@ -1000,6 +1052,32 @@ public class Main extends android.app.Activity
             Handled;
       } /*dispatchKeyEvent*/
 
+    void BuildActivityResultActions()
+      {
+        ActivityResultActions = new java.util.HashMap<Integer, RequestResponseAction>();
+        ActivityResultActions.put
+          (
+            ChooseFontRequest,
+            new RequestResponseAction()
+              {
+                public void Run
+                  (
+                    int ResultCode,
+                    Intent TheIntent
+                  )
+                  {
+                  /* Unfortunately I can't send this Intent directly from the Picker
+                    without using some odd launch-mode settings to avoid another instance
+                    of Main being created. Which is why I do it here. */
+                    TheIntent.setClass(Main.this, Main.class)
+                        .setAction(Intent.ACTION_VIEW)
+                        .setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                    startActivity(TheIntent);
+                  } /*Run*/
+              } /*RequestResponseAction*/
+          );
+      } /*BuildActivityResultActions*/
+
     @Override
     public void onCreate
       (
@@ -1014,6 +1092,7 @@ public class Main extends android.app.Activity
             CategoryCodes.put(Unicode.GetCategoryName(i), i);
           } /*for*/
         super.onCreate(ToRestore);
+        BuildActivityResultActions();
         setContentView(R.layout.main);
           {
             ShowSelector = (Spinner)findViewById(R.id.show_prompt);
@@ -1221,6 +1300,104 @@ public class Main extends android.app.Activity
       } /*onPostCreate*/
 
     @Override
+    protected void OnCreateOptionsMenu()
+      {
+        AddOptionsMenuItem
+          (
+            /*StringID =*/ R.string.choose_font,
+            /*IconID =*/ R.drawable.ic_font,
+            /*ActionBarUsage =*/ android.view.MenuItem.SHOW_AS_ACTION_IF_ROOM,
+            /*Action =*/
+                new Runnable()
+                  {
+                    public void run()
+                      {
+                        final Intent LaunchPicker = new Intent(Intent.ACTION_PICK)
+                            .setClass(Main.this, Picker.class)
+                            .putExtra(Picker.ExtensionID, ".ttf")
+                            .putExtra
+                              (
+                                Picker.LookInID,
+                                new String[]
+                                    {
+                                        "/system/fonts",
+                                        "Fonts",
+                                        "Download",
+                                    }
+                              );
+                          {
+                            final Bundle ChooseSystemFont = new Bundle();
+                            ChooseSystemFont.putString(Picker.SpecialItemKeyID, "system"); /* actual value ignored */
+                            ChooseSystemFont.putString(Picker.SpecialItemValueID, getString(R.string.system_font));
+                            LaunchPicker
+                                .putExtra
+                                  (
+                                    Picker.SpecialItemsID,
+                                    new android.os.Parcelable[]
+                                      {
+                                        ChooseSystemFont,
+                                      }
+                                  );
+                          }
+                        if (CurFontName == null)
+                          {
+                            LaunchPicker.putExtra(Picker.PreviousSpecialItemID, "system");
+                          }
+                        else
+                          {
+                            LaunchPicker.putExtra(Picker.PreviousItemID, CurFontName);
+                          } /*if*/
+                        startActivityForResult(LaunchPicker, ChooseFontRequest);
+                      } /*run*/
+                  } /*Runnable*/
+          );
+      } /*onCreateOptionsMenu*/
+
+    @Override
+    protected void onNewIntent
+      (
+        Intent TheIntent
+      )
+      {
+        String Action = TheIntent.getAction();
+        if (Action != null)
+          {
+            Action = Action.intern();
+          } /*if*/
+        if (Action == Intent.ACTION_VIEW)
+          {
+            final String SpecialFontName = TheIntent.getStringExtra(Picker.SpecialItemSelectedID);
+            if (SpecialFontName != null)
+              {
+              /* only one possible special entry, so don't bother actually checking returned key */
+                SetFontName(null);
+              }
+            else
+              {
+                SetFontName(TheIntent.getData().getPath());
+              } /*if*/
+          } /*if*/
+      } /*onnewIntent*/
+
+    @Override
+    public void onActivityResult
+      (
+        int RequestCode,
+        int ResultCode,
+        Intent Data
+      )
+      {
+        if (ResultCode != android.app.Activity.RESULT_CANCELED)
+          {
+            final RequestResponseAction Action = ActivityResultActions.get(RequestCode);
+            if (Action != null)
+              {
+                Action.Run(ResultCode, Data);
+              } /*if*/
+          } /*if*/
+      } /*onActivityResult*/
+
+    @Override
     public void onSaveInstanceState
       (
         Bundle ToSave
@@ -1231,6 +1408,10 @@ public class Main extends android.app.Activity
         ToSave.putInt("category", ShowCategory);
         ToSave.putInt("char", CurChar);
         ToSave.putIntArray("input_text", GetCollectedText());
+        if (CurFontName != null)
+          {
+            ToSave.putString("font_pathname", CurFontName);
+          } /*if*/
       } /*onSaveInstanceState*/
 
     @Override
@@ -1240,6 +1421,7 @@ public class Main extends android.app.Activity
       )
       {
         super.onRestoreInstanceState(ToRestore);
+        SetFontName(ToRestore.getString("font_pathname"));
         SetCollectedText(ToRestore.getIntArray("input_text"));
           {
             final int CharIndex = Unicode.GetCharIndex(ToRestore.getInt("char"), false);
