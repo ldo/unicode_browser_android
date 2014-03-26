@@ -1,5 +1,8 @@
 Feature highlights:
 
+16155.0, 2014 March 26:
+    fixed bug in UTF-16 encoding of supplemental Unicode characters.
+
 16154.2, 2014 March 25:
     allow choice of font to use.
 

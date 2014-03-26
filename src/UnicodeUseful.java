@@ -44,7 +44,7 @@ public class UnicodeUseful
                 Code > 0xffff ?
                     new char[]
                         { /* encode as UTF-16 */
-                            (char)(Code >> 10 & 0x3ff | 0xd800),
+                            (char)(Code - 0x10000 >> 10 & 0x3ff | 0xd800),
                             (char)(Code & 0x3ff | 0xdc00),
                         }
                 :
@@ -63,7 +63,7 @@ public class UnicodeUseful
             final int Code = Codes[i];
             if (Code > 0xffff)
               {
-                Result.append((char)(Code >> 10 & 0x3ff | 0xd800));
+                Result.append((char)(Code - 0x10000 >> 10 & 0x3ff | 0xd800));
                 Result.append((char)(Code & 0x3ff | 0xdc00));
               }
             else
@@ -92,7 +92,7 @@ public class UnicodeUseful
                 if ((CharCode2 & 0xfffffc00) == 0xdc00) /* decode UTF-16 */
                   {
                     ++i;
-                    Val = (Val & 0x3ff) << 10 | CharCode2 & 0x3ff;
+                    Val = ((Val & 0x3ff) << 10 | CharCode2 & 0x3ff) + 0x10000;
                   } /*if*/
               } /*if*/
             Result.add(Val);
@@ -100,7 +100,7 @@ public class UnicodeUseful
           } /*for*/
         return
             ToArray(Result);
-      } /*StringToChars*/
+      } /*CharSequenceToChars*/
 
     public static int[] ToArray
       (
