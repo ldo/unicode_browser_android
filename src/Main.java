@@ -493,7 +493,9 @@ public class Main extends ActionActivity
               {
                 ((TextView)findViewById(FieldID)).setTypeface(CurFont, Typeface.NORMAL);
               } /*for*/
-            MainCharList.notifyDataSetChanged(); /* need to ensure literals in list use new font as well */
+          /* need to ensure literals in lists use new font as well: */
+            MainCharList.notifyDataSetChanged();
+            LikeCharList.notifyDataSetChanged();
           } /*if*/
       } /*SetFontName*/
 
