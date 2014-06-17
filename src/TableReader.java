@@ -31,7 +31,7 @@ public class TableReader
         public final int NrChars, NrCharCategories;
         private final int NrCharRuns;
         private final int CharCodesOffset, CharNamesOffset, CharCategoriesOffset, AltNamesOffset, LikeCharsOffset;
-        private final int CategoryNamesOffset, CategoryCodesOffset, CategoryLowBoundsOffset, CategoryHighBoundsOffset, CharRunsStart;
+        private final int CategoryNamesOffset, CategoryOrderOffset, CategoryCodesOffset, CategoryLowBoundsOffset, CategoryHighBoundsOffset, CharRunsStart;
         private final int NameStringsStart;
         private final int AltNamesStart, LikeCharsStart;
         public final String Version;
@@ -68,7 +68,8 @@ public class TableReader
             LikeCharsOffset = AltNamesOffset + NrChars * 4;
             CategoryNamesOffset = ContentsBuf.getInt(4) + 4;
             NrCharCategories = ContentsBuf.getInt(CategoryNamesOffset - 4);
-            CategoryCodesOffset = CategoryNamesOffset + NrCharCategories * 4;
+            CategoryOrderOffset = CategoryNamesOffset + NrCharCategories * 4;
+            CategoryCodesOffset = CategoryOrderOffset + NrCharCategories * 4;
             CategoryLowBoundsOffset = CategoryCodesOffset + NrCharCategories * 4;
             CategoryHighBoundsOffset = CategoryLowBoundsOffset + NrCharCategories * 4;
             NameStringsStart = ContentsBuf.getInt(12);
@@ -106,14 +107,23 @@ public class TableReader
           (
             int CategoryCode /* must be in [0 .. NrCharCategories - 1] */
           )
-          /* returns the name of the category with the specified code.
-            Codes are assigned alphabetically by category name. */
+          /* returns the name of the category with the specified code. */
           {
             return
                 GetString(ContentsBuf.getInt(CategoryNamesOffset + CategoryCode * 4));
           } /*GetCategoryName*/
 
-        public int GetCategoryCode
+        public int GetCategoryNameOrdered
+          (
+            int Index /* must be in [0 .. NrCharCategories - 1] */
+          )
+          /* returns the category code with the specified alphabetical index. */
+          {
+            return
+                ContentsBuf.getInt(CategoryOrderOffset + Index * 4);
+          } /*GetCategoryNameOrdered*/
+
+        public int GetCategoryCodeOrdered
           (
             int Index /* must be in [0 .. NrCharCategories - 1] */
           )
@@ -122,7 +132,7 @@ public class TableReader
           {
             return
                 ContentsBuf.getInt(CategoryCodesOffset + Index * 4);
-          } /*GetCategoryCode*/
+          } /*GetCategoryCodeOrdered*/
 
         public int GetCategoryLowBoundByCode
           (

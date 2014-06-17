@@ -49,13 +49,15 @@ class DataWriter :
 #        * nr char codes
 #        * array [nr char codes] of char codes
 #        * array [nr char codes] of char names (start offsets within name strings table)
-#        * array [nr char codes] of char category codes
+#        * array [nr char codes] of category code for each character
 #        * array [nr char codes] of alternative names (start offsets within alternative names table)
 #        * array [nr char codes] of like char codes (start offsets within like char codes table)
 #        * nr categories
 #        * array [nr categories] of category names (start offsets within name strings table),
+#              indexed by category code
+#        * array [nr categories] of category codes (indexes into category names array),
 #              ordered alphabetically
-#        * array [nr categories] of category codes (indexes into previous array),
+#        * array [nr categories] of category codes (indexes into category names array),
 #              sorted by code block order
 #        * array [nr categories] of char category low bounds, same order as previous array
 #        * array [nr categories] of char category high bounds, same order as previous array
@@ -121,7 +123,7 @@ class DataWriter :
         index = len(self.categories)
         self.categories.append \
           (
-            {"name" : self.add_string(category_name), "low" : low, "high" : high, "index" : index}
+            {"namestr" : category_name, "name" : self.add_string(category_name), "low" : low, "high" : high, "index" : index}
           )
         return \
             index
@@ -184,8 +186,11 @@ class DataWriter :
         #end for
         char_table = charcodes + char_names + char_categories + othernames + likechars
         category_table = struct.pack("<L", len(self.categories))
-        for i in sorted(self.categories, key = lambda c : c["name"]) :
+        for i in self.categories :
             category_table += struct.pack("<L", i["name"])
+        #end for
+        for i in sorted(self.categories, key = lambda c : c["namestr"]) :
+            category_table += struct.pack("<L", i["index"])
         #end for
         categories = sorted(self.categories, key = lambda c : c["low"])
         for cat_field in ("index", "low", "high") :

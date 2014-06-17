@@ -222,7 +222,8 @@ public class Main extends ActionActivity
             final AdapterView.OnItemSelectedListener SaveListener =
                 TheListView.getOnItemSelectedListener();
             TheListView.setOnItemSelectedListener(null); /* avoid reentrant calls */
-            TheListView.setSelection(ShowCategory);
+            ((CategorySortItemAdapter<?>)TheListView.getAdapter())
+                .SetSelection(TheListView, ShowCategory);
             TheListView.post /* so it runs after OnItemSelectedListener would be triggered */
               (
                 new Runnable()
@@ -271,7 +272,48 @@ public class Main extends ActionActivity
 
       } /*CategorySelect*/;
 
-    class CategoryItemAdapter extends CommonItemAdapter<CategoryItem>
+    abstract class CategorySortItemAdapter<CategoryItem> extends CommonItemAdapter<CategoryItem>
+      /* allows selection of list items by category code. */
+      {
+        final android.util.SparseArray<Integer> CodeToIndex =
+            new android.util.SparseArray<Integer>();
+
+        public CategorySortItemAdapter
+          (
+            int ResID
+          )
+          {
+            super(ResID);
+          } /*CategorySortItemAdapter*/
+
+        public void Add
+          (
+            int CategoryCode,
+            CategoryItem Item
+          )
+          /* Use this instead of add to populate CodeToIndex table. */
+          {
+            CodeToIndex.put(CategoryCode, getCount());
+            add(Item);
+          } /*Add*/
+
+        public void SetSelection
+          (
+            Spinner Parent,
+            int CategoryCode
+          )
+          /* Use this instead of Parent.setSelection to select list item by category code. */
+          {
+            final Integer CodeIndex = CodeToIndex.get(CategoryCode);
+            if (CodeIndex != null)
+              {
+                Parent.setSelection(CodeIndex);
+              } /*if*/
+          } /*SetSelection*/
+
+      } /*CategorySortItemAdapter*/;
+
+    class CategoryItemAdapter extends CategorySortItemAdapter<CategoryItem>
       {
 
         public CategoryItemAdapter()
@@ -311,7 +353,7 @@ public class Main extends ActionActivity
 
       } /*CodeBlockSelect*/;
 
-    class CodeBlockItemAdapter extends CommonItemAdapter<CodeBlockItem>
+    class CodeBlockItemAdapter extends CategorySortItemAdapter<CodeBlockItem>
       {
 
         public CodeBlockItemAdapter()
@@ -1246,17 +1288,19 @@ public class Main extends ActionActivity
           {
             CategoryListView = (Spinner)findViewById(R.id.category_selector);
             CategoryList = new CategoryItemAdapter();
-            for (int CategoryCode = 0; CategoryCode < Unicode.NrCharCategories; ++CategoryCode)
+            for (int CategoryIndex = 0; CategoryIndex < Unicode.NrCharCategories; ++CategoryIndex)
               {
-                CategoryList.add
+                final int CategoryCode = Unicode.GetCategoryNameOrdered(CategoryIndex);
+                CategoryList.Add
                   (
+                    CategoryCode,
                     new CategoryItem(CategoryCode, Unicode.GetCategoryName(CategoryCode))
                   );
               } /*for*/
             CategoryListView.setAdapter(CategoryList);
             if (ToRestore == null)
               {
-                CategoryListView.setSelection(ShowCategory);
+                CategoryList.SetSelection(CategoryListView, ShowCategory);
               } /*if*/
             CategoryListViewListener = new CategorySelect();
             CategoryListView.setOnItemSelectedListener(CategoryListViewListener);
@@ -1266,11 +1310,13 @@ public class Main extends ActionActivity
             CodeBlockList = new CodeBlockItemAdapter();
             for (int CategoryIndex = 0; CategoryIndex < Unicode.NrCharCategories; ++CategoryIndex)
               {
-                CodeBlockList.add
+                final int CategoryCode = Unicode.GetCategoryCodeOrdered(CategoryIndex);
+                CodeBlockList.Add
                   (
+                    CategoryCode,
                     new CodeBlockItem
                       (
-                        /*Code =*/ Unicode.GetCategoryCode(CategoryIndex),
+                        /*Code =*/ CategoryCode,
                         /*Low =*/ Unicode.GetCategoryLowBoundByCode(CategoryIndex),
                         /*High =*/ Unicode.GetCategoryHighBoundByCode(CategoryIndex)
                       )
@@ -1279,7 +1325,7 @@ public class Main extends ActionActivity
             CodeBlockListView.setAdapter(CodeBlockList);
             if (ToRestore == null)
               {
-                CodeBlockListView.setSelection(ShowCategory);
+                CodeBlockList.SetSelection(CodeBlockListView, ShowCategory);
               } /*if*/
             CodeBlockListViewListener = new CodeBlockSelect();
             CodeBlockListView.setOnItemSelectedListener(CodeBlockListViewListener);
