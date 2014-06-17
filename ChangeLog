@@ -1,10 +1,13 @@
 Feature highlights:
 
+16238.2, 2014 June 17:
+    update to Unicode 7.0.0.
+
 16238.0, 2014 June 17:
     character list now shows “searching” instead of “no matches found”
     while search is in progress, only changing to latter if search
     terminates with no matches found.
-    add option to select from categories in code-block order
+    add option to select from categories in code-block order.
 
 16155.0, 2014 March 26:
     fixed bug in UTF-16 encoding of supplemental Unicode characters.
