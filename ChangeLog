@@ -1,5 +1,10 @@
 Feature highlights:
 
+16238.0, 2014 June 17:
+    character list now shows “searching” instead of “no matches found”
+    while search is in progress, only changing to latter if search
+    terminates with no matches found.
+
 16155.0, 2014 March 26:
     fixed bug in UTF-16 encoding of supplemental Unicode characters.
 

@@ -531,6 +531,7 @@ public class Main extends ActionActivity
       )
       {
         CancelBG();
+        NoCharsDisplay.setText(R.string.search_no_chars);
         MainCharList.setNotifyOnChange(false);
         if (Matching == null || !ShrinkMatch)
           {
@@ -646,8 +647,13 @@ public class Main extends ActionActivity
                 CharListView.setSelection(0); /* only works after notifyDataSetChanged! */
                 FirstCall = false;
               } /*if*/
+            final boolean KeepGoing = CurIndex < Unicode.NrChars;
+            if (!KeepGoing)
+              {
+                NoCharsDisplay.setText(R.string.search_no_chars);
+              } /*if*/
             return
-                CurIndex < Unicode.NrChars;
+                KeepGoing;
           } /*Run*/
 
       } /*BGCharListRebuilder*/;
@@ -657,6 +663,7 @@ public class Main extends ActionActivity
         String Matching /* won't be null */
       )
       {
+        NoCharsDisplay.setText(R.string.searching);
         new BGCharListRebuilder(Matching);
       } /*QueueRebuildMainCharList*/
 
