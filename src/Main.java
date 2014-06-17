@@ -386,23 +386,31 @@ public class Main extends ActionActivity
 
     enum ShowModeEnum
       {
-        Categories(0, R.string.category_no_chars),
-        CodeBlocks(1, R.string.category_no_chars),
-        Searching(2, R.string.search_no_chars),
-        Favourites(3, R.string.faves_no_chars),
+        Categories(0, R.string.category_no_chars, R.string.category_prompt, R.string.categories_item),
+        CodeBlocks(1, R.string.category_no_chars, R.string.code_block_prompt, R.string.code_blocks_item),
+        Searching(2, R.string.search_no_chars, R.string.search_prompt, R.string.search_item),
+        Favourites(3, R.string.faves_no_chars, R.string.faves_prompt, R.string.faves_item),
         ;
 
         public final int Index;
         public final int EmptyStringID; /* ID of string to show when character list is empty */
+        public final int PromptStringID;
+          /* string that appears in spinner when this item is selected */
+        public final int ItemStringID;
+          /* string to appear in popup to select new item */
 
         private ShowModeEnum
           (
             int Index,
-            int EmptyStringID
+            int EmptyStringID,
+            int PromptStringID,
+            int ItemStringID
           )
           {
             this.Index = Index;
             this.EmptyStringID = EmptyStringID;
+            this.PromptStringID = PromptStringID;
+            this.ItemStringID = ItemStringID;
           } /*ShowModeEnum*/
 
         public static ShowModeEnum Val
@@ -437,43 +445,12 @@ public class Main extends ActionActivity
             long ID
           )
           {
-            SetShowingMode(((ShowModeItem)Parent.getAdapter().getItem(Position)).ModeEnum);
+            SetShowingMode((ShowModeEnum)Parent.getAdapter().getItem(Position));
           } /*onItemSelected*/
 
       } /*ShowingSelect*/;
 
-    class ShowModeItem
-      /* just to hold toString method which cannot go in ShowModeEnum because
-        latter is static */
-      {
-        public final ShowModeEnum ModeEnum;
-        public final int PromptResID;
-          /* string that appears in spinner when this item is selected */
-        public final int ItemResID;
-          /* string to appear in popup to select new item */
-
-        public ShowModeItem
-          (
-            ShowModeEnum ModeEnum,
-            int PromptResID,
-            int ItemResID
-          )
-          {
-            this.ModeEnum = ModeEnum;
-            this.PromptResID = PromptResID;
-            this.ItemResID = ItemResID;
-          } /*ShowModeEnum*/
-
-        @Override
-        public String toString()
-          {
-            return
-                getString(ItemResID);
-          } /*toString*/
-
-      } /*ShowModeItem*/;
-
-    class ShowItemAdapter extends CommonItemAdapter<ShowModeItem>
+    class ShowItemAdapter extends CommonItemAdapter<ShowModeEnum>
       {
 
         public ShowItemAdapter()
@@ -484,14 +461,14 @@ public class Main extends ActionActivity
         @Override
         public void SetupView
           (
-            ShowModeItem TheItem,
+            ShowModeEnum TheItem,
             View TheView,
             boolean DropDown
           )
           {
             ((TextView)TheView.findViewById(android.R.id.text1)).setText
               (
-                DropDown ? TheItem.ItemResID : TheItem.PromptResID
+                DropDown ? TheItem.ItemStringID : TheItem.PromptStringID
               );
           } /*SetupView*/
 
@@ -1241,42 +1218,10 @@ public class Main extends ActionActivity
           {
             ShowSelector = (Spinner)findViewById(R.id.show_prompt);
             final ShowItemAdapter ToShow = new ShowItemAdapter();
-            ToShow.add
-              (
-                new ShowModeItem
-                  (
-                    /*ModeEnum =*/ ShowModeEnum.Categories,
-                    /*PromptResID =*/ R.string.category_prompt,
-                    /*ItemResID =*/ R.string.categories_item
-                  )
-              );
-            ToShow.add
-              (
-                new ShowModeItem
-                  (
-                    /*ModeEnum =*/ ShowModeEnum.CodeBlocks,
-                    /*PromptResID =*/ R.string.code_block_prompt,
-                    /*ItemResID =*/ R.string.code_blocks_item
-                  )
-              );
-            ToShow.add
-              (
-                new ShowModeItem
-                  (
-                    /*ModeEnum =*/ ShowModeEnum.Searching,
-                    /*PromptResID =*/ R.string.search_prompt,
-                    /*ItemResID =*/ R.string.search_item
-                  )
-              );
-            ToShow.add
-              (
-                new ShowModeItem
-                  (
-                    /*ModeEnum =*/ ShowModeEnum.Favourites,
-                    /*PromptResID =*/ R.string.faves_prompt,
-                    /*ItemResID =*/ R.string.faves_item
-                  )
-              );
+            ToShow.add(ShowModeEnum.Categories);
+            ToShow.add(ShowModeEnum.CodeBlocks);
+            ToShow.add(ShowModeEnum.Searching);
+            ToShow.add(ShowModeEnum.Favourites);
             ShowSelector.setAdapter(ToShow);
             ShowSelectorListener = new ShowingSelect();
             ShowSelector.setOnItemSelectedListener(ShowSelectorListener);
