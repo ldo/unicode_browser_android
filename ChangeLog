@@ -4,6 +4,7 @@ Feature highlights:
     character list now shows “searching” instead of “no matches found”
     while search is in progress, only changing to latter if search
     terminates with no matches found.
+    add option to select from categories in code-block order
 
 16155.0, 2014 March 26:
     fixed bug in UTF-16 encoding of supplemental Unicode characters.

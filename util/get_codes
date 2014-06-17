@@ -16,7 +16,7 @@
 # only need to run it if your system has a newer version of the
 # Unicode tables, and you want to update the source accordingly.
 #
-# Copyright 2013 Lawrence D'Oliveiro <ldo@geek-central.gen.nz>.
+# Copyright 2013, 2014 Lawrence D'Oliveiro <ldo@geek-central.gen.nz>.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -53,7 +53,12 @@ class DataWriter :
 #        * array [nr char codes] of alternative names (start offsets within alternative names table)
 #        * array [nr char codes] of like char codes (start offsets within like char codes table)
 #        * nr categories
-#        * array [nr categories] of category names (start offsets within name strings table)
+#        * array [nr categories] of category names (start offsets within name strings table),
+#              ordered alphabetically
+#        * array [nr categories] of category codes (indexes into previous array),
+#              sorted by code block order
+#        * array [nr categories] of char category low bounds, same order as previous array
+#        * array [nr categories] of char category high bounds, same order as previous array
 #        * nr character runs
 #        * array [nr character runs] of (start code, end code, start index within character arrays)
 #        * table of alternative names (start offsets within name strings table),
@@ -112,9 +117,12 @@ class DataWriter :
     # Caller-visible stuff follows
     #-
 
-    def add_category(self, category_name) :
+    def add_category(self, category_name, low, high) :
         index = len(self.categories)
-        self.categories.append(self.add_string(category_name))
+        self.categories.append \
+          (
+            {"name" : self.add_string(category_name), "low" : low, "high" : high, "index" : index}
+          )
         return \
             index
     #end add_category
@@ -176,9 +184,14 @@ class DataWriter :
         #end for
         char_table = charcodes + char_names + char_categories + othernames + likechars
         category_table = struct.pack("<L", len(self.categories))
-        for i in self.categories :
-            category_table += struct.pack("<L", i)
+        for i in sorted(self.categories, key = lambda c : c["name"]) :
+            category_table += struct.pack("<L", i["name"])
         #end for
+        categories = sorted(self.categories, key = lambda c : c["low"])
+        for cat_field in ("index", "low", "high") :
+            for i in categories :
+                category_table += struct.pack("<L", i[cat_field])
+            #end for
         char_runs = struct.pack("<L", len(self.char_runs))
         for run in self.char_runs :
             char_runs += struct.pack("<LLL", run["startcode"], run["endcode"], run["startindex"])
@@ -244,9 +257,18 @@ out_file = "res/raw/unicode.rtttl"
 hexdigits = r"[0-9A-F]+" # file always has them in uppercase
 
 remap_categories = \
-    { # split some categories because I don’t like lumping control characters together with printable ones
-        "C0 Controls and Basic Latin (Basic Latin)" : ["C0 Controls", "Basic Latin"],
-        "C1 Controls and Latin-1 Supplement (Latin-1 Supplement)" : ["C1 Controls", "Latin-1 Supplement"],
+    { # split some categories because I don’t like lumping
+      # control characters together with printable ones
+        "C0 Controls and Basic Latin (Basic Latin)" :
+            [
+                {"name" : "C0 Controls", "range" : (0, 127)}, # actually discontiguous
+                {"name" : "Basic Latin", "range" : (32, 126)},
+            ],
+        "C1 Controls and Latin-1 Supplement (Latin-1 Supplement)" :
+            [
+                {"name" : "C1 Controls", "range" : (128, 159)},
+                {"name" : "Latin-1 Supplement", "range" : (160, 255)},
+            ],
     }
 
 chars = {}
@@ -294,7 +316,7 @@ with open(file = data_file, errors = "ignore") as data :
             if include_it :
                 remap = remap_categories.get(char_category)
                 if remap != None :
-                    use_char_category = remap[charcode & 127 >= 32 and charcode != 127]
+                    use_char_category = remap[charcode & 127 >= 32 and charcode != 127]["name"]
                 else :
                     use_char_category = char_category
                 #end if
@@ -361,7 +383,17 @@ with open(file = data_file, errors = "ignore") as data :
             pieces = re.search("^(" + hexdigits + ")\t(.+)\t(" + hexdigits + ")$", line[3:])
             if pieces != None :
                 char_category = pieces.group(2)
-                for this_char_category in remap_categories.get(char_category, [char_category]) :
+                lowbound = int(pieces.group(1), 16)
+                highbound = int(pieces.group(3), 16)
+                for \
+                    this_char_category \
+                in \
+                    remap_categories.get \
+                      (
+                        char_category,
+                        [{"name" : char_category, "range" : (lowbound, highbound)}]
+                      ) \
+                :
                     if this_char_category not in categories :
                         categories.append(this_char_category)
                     #end if
@@ -375,9 +407,10 @@ with open(file = data_file, errors = "ignore") as data :
 
 out = DataWriter(out_file, version)
 category_codes = {}
-for name in sorted(categories) :
+for category in categories :
+    name = category["name"]
     if name in categories_used :
-        category_codes[name] = out.add_category(name)
+        category_codes[name] = out.add_category(name, category["range"][0], category["range"][1])
     else :
         sys.stdout.write("ignore unused category “%s”\n" % name)
     #end if

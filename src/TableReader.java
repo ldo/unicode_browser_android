@@ -5,7 +5,7 @@ package nz.gen.geek_central.unicode_browser;
     The character table file is created by the util/get_codes
     script; see there for a description of the file format.
 
-    Copyright 2013 Lawrence D'Oliveiro <ldo@geek-central.gen.nz>.
+    Copyright 2013, 2014 Lawrence D'Oliveiro <ldo@geek-central.gen.nz>.
 
     Licensed under the Apache License, Version 2.0 (the "License"); you may not
     use this file except in compliance with the License. You may obtain a copy of
@@ -31,7 +31,7 @@ public class TableReader
         public final int NrChars, NrCharCategories;
         private final int NrCharRuns;
         private final int CharCodesOffset, CharNamesOffset, CharCategoriesOffset, AltNamesOffset, LikeCharsOffset;
-        private final int CategoryNamesOffset, CharRunsStart;
+        private final int CategoryNamesOffset, CategoryCodesOffset, CategoryLowBoundsOffset, CategoryHighBoundsOffset, CharRunsStart;
         private final int NameStringsStart;
         private final int AltNamesStart, LikeCharsStart;
         public final String Version;
@@ -48,7 +48,10 @@ public class TableReader
                 final int BytesRead = TableFile.createInputStream().read(Contents);
                 if (BytesRead != ContentsLength)
                   {
-                    throw new RuntimeException(String.format("expected %d bytes, got %d", ContentsLength, BytesRead));
+                    throw new RuntimeException
+                      (
+                        String.format("expected %d bytes, got %d", ContentsLength, BytesRead)
+                      );
                   } /*if*/
               }
             catch (java.io.IOException Failed)
@@ -63,9 +66,12 @@ public class TableReader
             CharCategoriesOffset = CharNamesOffset + NrChars * 4;
             AltNamesOffset = CharCategoriesOffset + NrChars * 4;
             LikeCharsOffset = AltNamesOffset + NrChars * 4;
-            NameStringsStart = ContentsBuf.getInt(12);
             CategoryNamesOffset = ContentsBuf.getInt(4) + 4;
             NrCharCategories = ContentsBuf.getInt(CategoryNamesOffset - 4);
+            CategoryCodesOffset = CategoryNamesOffset + NrCharCategories * 4;
+            CategoryLowBoundsOffset = CategoryCodesOffset + NrCharCategories * 4;
+            CategoryHighBoundsOffset = CategoryLowBoundsOffset + NrCharCategories * 4;
+            NameStringsStart = ContentsBuf.getInt(12);
             CharRunsStart = ContentsBuf.getInt(8) + 4;
             NrCharRuns = ContentsBuf.getInt(CharRunsStart - 4);
             AltNamesStart = ContentsBuf.getInt(16);
@@ -100,11 +106,43 @@ public class TableReader
           (
             int CategoryCode /* must be in [0 .. NrCharCategories - 1] */
           )
-          /* returns the name of the category with the specified code. */
+          /* returns the name of the category with the specified code.
+            Codes are assigned alphabetically by category name. */
           {
             return
                 GetString(ContentsBuf.getInt(CategoryNamesOffset + CategoryCode * 4));
           } /*GetCategoryName*/
+
+        public int GetCategoryCode
+          (
+            int Index /* must be in [0 .. NrCharCategories - 1] */
+          )
+          /* returns the category code with the specified index. Indexes are
+            assigned by increasing code block range start. */
+          {
+            return
+                ContentsBuf.getInt(CategoryCodesOffset + Index * 4);
+          } /*GetCategoryCode*/
+
+        public int GetCategoryLowBoundByCode
+          (
+            int Index /* must be in [0 .. NrCharCategories - 1] */
+          )
+          /* returns the lowest character code in the category with the specified index. */
+          {
+            return
+                ContentsBuf.getInt(CategoryLowBoundsOffset + Index * 4);
+          } /*GetCategoryLowBoundByCode*/
+
+        public int GetCategoryHighBoundByCode
+          (
+            int Index /* must be in [0 .. NrCharCategories - 1] */
+          )
+          /* returns the highest character code in the category with the specified index. */
+          {
+            return
+                ContentsBuf.getInt(CategoryHighBoundsOffset + Index * 4);
+          } /*GetCategoryHighBoundByCode*/
 
         public int GetCharIndex
           (

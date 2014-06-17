@@ -26,6 +26,12 @@
                 android:layout_height="wrap_content"
                 style="@style/spinner_common"
             />
+            <Spinner
+                android:id="@+id/code_block_selector"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                style="@style/spinner_common"
+            />
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"

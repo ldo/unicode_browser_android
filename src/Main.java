@@ -25,7 +25,6 @@ import android.view.View;
 import android.view.LayoutInflater;
 import android.widget.TextView;
 import android.widget.Button;
-import android.widget.ArrayAdapter;
 import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.Spinner;
@@ -91,14 +90,76 @@ public class Main extends ActionActivity
 
     private BGTask CurrentBG = null;
 
+    abstract class CommonItemAdapter<ItemType> extends android.widget.ArrayAdapter<ItemType>
+      {
+        final int ResID;
+        final LayoutInflater TemplateInflater = Main.this.getLayoutInflater();
+
+        public CommonItemAdapter
+          (
+            int ResID
+          )
+          {
+            super(Main.this, ResID);
+            this.ResID = ResID;
+          } /*CommonItemAdapter*/
+
+        public abstract void SetupView
+          (
+            ItemType TheItem,
+            View TheView,
+            boolean DropDown
+          );
+          /* puts relevant information from TheItem into TheView. */
+
+        @Override
+        public View getView
+          (
+            int Position,
+            View ReuseView,
+            android.view.ViewGroup Parent
+          )
+          {
+            View TheView = ReuseView;
+            if (TheView == null)
+              {
+                TheView = TemplateInflater.inflate(ResID, null);
+              } /*if*/
+            SetupView((ItemType)getItem(Position), TheView, false);
+            return
+                TheView;
+          } /*getView*/
+
+        @Override
+        public View getDropDownView
+          (
+            int Position,
+            View ReuseView,
+            android.view.ViewGroup Parent
+          )
+          {
+            View TheView = ReuseView;
+            if (TheView == null)
+              {
+                TheView = TemplateInflater.inflate(ResID, null);
+              } /*if*/
+            SetupView((ItemType)getItem(Position), TheView, true);
+            return
+                TheView;
+          } /*getDropDownView*/
+
+      } /*CommonItemAdapter*/;
+
     private java.util.Map<String, Integer> CategoryCodes;
 
     private android.text.ClipboardManager Clipboard;
 
     private int[] Favourites = null;
-    private Spinner ShowSelector, CategoryListView;
-    private AdapterView.OnItemSelectedListener ShowSelectorListener, CategoryListViewListener;
+    private Spinner ShowSelector, CategoryListView, CodeBlockListView;
+    private AdapterView.OnItemSelectedListener
+        ShowSelectorListener, CategoryListViewListener, CodeBlockListViewListener;
     private CategoryItemAdapter CategoryList;
+    private CodeBlockItemAdapter CodeBlockList;
     private android.widget.EditText SearchEntry;
     private android.widget.ProgressBar Progress;
     private ShowModeEnum NowShowing;
@@ -128,37 +189,73 @@ public class Main extends ActionActivity
             this.Name = Name.intern();
           } /*CategoryItem*/
 
-        public String toString()
-          {
-            return
-                this.Name;
-          } /*toString*/
-
       } /*CategoryItem*/;
+
+    static class CodeBlockItem
+      {
+        public final int Code, Low, High;
+
+        public CodeBlockItem
+          (
+            int Code,
+            int Low,
+            int High
+          )
+          {
+            this.Code = Code;
+            this.Low = Low;
+            this.High = High;
+          } /*CodeBlockItem*/
+
+      } /*CodeBlockItem*/;
 
     private void SetShowingCategory
       (
-        int NewCategory
+        int NewCategory,
+        boolean CodeBlock
       )
       {
-        CategoryListView.setOnItemSelectedListener(null); /* avoid reentrant calls */
         ShowCategory = NewCategory;
-        CategoryListView.setSelection(ShowCategory);
-        CategoryListView.post /* so it runs after OnItemSelectedListener would be triggered */
-          (
-            new Runnable()
-              {
-                public void run()
+        for (boolean DoingCodeBlock = false;;)
+          {
+            final Spinner TheListView = DoingCodeBlock ? CodeBlockListView : CategoryListView;
+            final AdapterView.OnItemSelectedListener SaveListener =
+                TheListView.getOnItemSelectedListener();
+            TheListView.setOnItemSelectedListener(null); /* avoid reentrant calls */
+            TheListView.setSelection(ShowCategory);
+            TheListView.post /* so it runs after OnItemSelectedListener would be triggered */
+              (
+                new Runnable()
                   {
-                    CategoryListView.setOnItemSelectedListener(CategoryListViewListener);
-                  } /*run*/
-              } /*Runnable*/
-          );
-        SetShowingMode(ShowModeEnum.Categories);
+                    public void run()
+                      {
+                        TheListView.setOnItemSelectedListener(SaveListener);
+                      } /*run*/
+                  } /*Runnable*/
+              );
+            if (DoingCodeBlock)
+                break;
+            DoingCodeBlock = true;
+          } /*for*/
+        SetShowingMode(CodeBlock ? ShowModeEnum.CodeBlocks : ShowModeEnum.Categories);
         RebuildMainCharList();
       } /*SetShowingCategory*/
 
-    class ShowingSelect implements AdapterView.OnItemSelectedListener
+    abstract class CommonOnItemSelectedListener implements AdapterView.OnItemSelectedListener
+      /* just so I can implement useless onNothingSelected method in one place */
+      {
+
+        public void onNothingSelected
+          (
+            AdapterView<?> Parent
+          )
+          {
+          /* can't think of anything to do */
+          } /*onNothingSelected*/
+
+      } /*CommonOnItemSelectedListener*/;
+
+    class CategorySelect extends CommonOnItemSelectedListener
       {
 
         public void onItemSelected
@@ -169,82 +266,88 @@ public class Main extends ActionActivity
             long ID
           )
           {
-            SetShowingMode(((ShowModeItem)Parent.getAdapter().getItem(Position)).ModeEnum);
+            SetShowingCategory(CategoryList.getItem(Position).Code, false);
           } /*onItemSelected*/
-
-        public void onNothingSelected
-          (
-            AdapterView<?> Parent
-          )
-          {
-          /* can't think of anything to do */
-          } /*onNothingSelected*/
-
-      } /*ShowingSelect*/;
-
-    class CategorySelect implements AdapterView.OnItemSelectedListener
-      {
-
-        public void onItemSelected
-          (
-            AdapterView<?> Parent,
-            View ItemView,
-            int Position,
-            long ID
-          )
-          {
-            SetShowingCategory(CategoryList.getItem(Position).Code);
-          } /*onItemSelected*/
-
-        public void onNothingSelected
-          (
-            AdapterView<?> Parent
-          )
-          {
-          /* can't think of anything to do */
-          } /*onNothingSelected*/
 
       } /*CategorySelect*/;
 
-    class CategoryItemAdapter extends ArrayAdapter<CategoryItem>
+    class CategoryItemAdapter extends CommonItemAdapter<CategoryItem>
       {
-        static final int ResID = android.R.layout.simple_dropdown_item_1line;
-        final LayoutInflater TemplateInflater = Main.this.getLayoutInflater();
 
         public CategoryItemAdapter()
           {
-            super(Main.this, ResID);
+            super(android.R.layout.simple_spinner_item);
           } /*CategoryItemAdapter*/
 
         @Override
-        public View getView
+        public void SetupView
           (
-            int Position,
-            View ReuseView,
-            android.view.ViewGroup Parent
+            CategoryItem TheItem,
+            View TheView,
+            boolean DropDown
           )
           {
-            View TheView = ReuseView;
-            if (TheView == null)
-              {
-                TheView = TemplateInflater.inflate(ResID, null);
-              } /*if*/
-            final CategoryItem ThisItem = getItem(Position);
             ((TextView)TheView.findViewById(android.R.id.text1)).setText
               (
-                ThisItem.Name
+                TheItem.Name
               );
-            return
-                TheView;
-          } /*getView*/
+          } /*SetupView*/
 
       } /*CategoryItemAdapter*/;
+
+    class CodeBlockSelect extends CommonOnItemSelectedListener
+      {
+
+        public void onItemSelected
+          (
+            AdapterView<?> Parent,
+            View ItemView,
+            int Position,
+            long ID
+          )
+          {
+            SetShowingCategory(CodeBlockList.getItem(Position).Code, true);
+          } /*onItemSelected*/
+
+      } /*CodeBlockSelect*/;
+
+    class CodeBlockItemAdapter extends CommonItemAdapter<CodeBlockItem>
+      {
+
+        public CodeBlockItemAdapter()
+          {
+            super(android.R.layout.simple_spinner_item);
+          } /*CodeBlockItemAdapter*/
+
+        @Override
+        public void SetupView
+          (
+            CodeBlockItem TheItem,
+            View TheView,
+            boolean DropDown
+          )
+          {
+            ((TextView)TheView.findViewById(android.R.id.text1)).setText
+              (
+                String.format
+                  (
+                    UnicodeUseful.NoLocale,
+                    getString(R.string.code_range),
+                    UnicodeUseful.FormatCharCode(TheItem.Low),
+                    UnicodeUseful.FormatCharCode(TheItem.High),
+                    Unicode.GetCategoryName(TheItem.Code)
+                  )
+              );
+          } /*SetupView*/
+
+      } /*CodeBlockItemAdapter*/;
 
     enum ShowModeEnum
       {
         Categories(0, R.string.category_no_chars),
-        Searching(1, R.string.search_no_chars),
-        Favourites(2, R.string.faves_no_chars),
+        CodeBlocks(1, R.string.category_no_chars),
+        Searching(2, R.string.search_no_chars),
+        Favourites(3, R.string.faves_no_chars),
         ;
 
         public final int Index;
@@ -281,6 +384,22 @@ public class Main extends ActionActivity
 
       } /*ShowModeEnum*/;
 
+    class ShowingSelect extends CommonOnItemSelectedListener
+      {
+
+        public void onItemSelected
+          (
+            AdapterView<?> Parent,
+            View ItemView,
+            int Position,
+            long ID
+          )
+          {
+            SetShowingMode(((ShowModeItem)Parent.getAdapter().getItem(Position)).ModeEnum);
+          } /*onItemSelected*/
+
+      } /*ShowingSelect*/;
+
     class ShowModeItem
       /* just to hold toString method which cannot go in ShowModeEnum because
         latter is static */
@@ -312,37 +431,27 @@ public class Main extends ActionActivity
 
       } /*ShowModeItem*/;
 
-    class ShowItemAdapter extends ArrayAdapter<ShowModeItem>
+    class ShowItemAdapter extends CommonItemAdapter<ShowModeItem>
       {
-        static final int ResID = android.R.layout.simple_dropdown_item_1line;
-        final LayoutInflater TemplateInflater = Main.this.getLayoutInflater();
 
         public ShowItemAdapter()
           {
-            super(Main.this, ResID);
+            super(android.R.layout.simple_spinner_item);
           } /*ShowItemAdapter*/
 
         @Override
-        public View getView
+        public void SetupView
           (
-            int Position,
-            View ReuseView,
-            android.view.ViewGroup Parent
+            ShowModeItem TheItem,
+            View TheView,
+            boolean DropDown
           )
           {
-            View TheView = ReuseView;
-            if (TheView == null)
-              {
-                TheView = TemplateInflater.inflate(ResID, null);
-              } /*if*/
-            final ShowModeItem ThisItem = getItem(Position);
             ((TextView)TheView.findViewById(android.R.id.text1)).setText
               (
-                ThisItem.PromptResID
+                DropDown ? TheItem.ItemResID : TheItem.PromptResID
               );
-            return
-                TheView;
-          } /*getView*/
+          } /*SetupView*/
 
       } /*ShowItemAdapter*/;
 
@@ -360,6 +469,13 @@ public class Main extends ActionActivity
         CategoryListView.setVisibility
           (
             What == ShowModeEnum.Categories ?
+                View.VISIBLE
+            :
+                View.INVISIBLE
+          );
+        CodeBlockListView.setVisibility
+          (
+            What == ShowModeEnum.CodeBlocks ?
                 View.VISIBLE
             :
                 View.INVISIBLE
@@ -393,75 +509,52 @@ public class Main extends ActionActivity
           } /*if*/
       } /*SetShowingMode*/
 
-    class CharItemAdapter extends ArrayAdapter<CharInfo>
+    class CharItemAdapter extends CommonItemAdapter<CharInfo>
       {
-        final int ResID;
-        final LayoutInflater TemplateInflater = Main.this.getLayoutInflater();
 
         CharItemAdapter
           (
             int ResID
           )
           {
-            super(Main.this, ResID);
-            this.ResID = ResID;
+            super(ResID);
           } /*CharItemAdapter*/
 
         @Override
-        public View getView
+        public void SetupView
           (
-            int Position,
-            View ReuseView,
-            android.view.ViewGroup Parent
+            CharInfo TheItem,
+            View TheView,
+            boolean DropDown
           )
           {
-            View TheView = ReuseView;
-            if (TheView == null)
-              {
-                TheView = TemplateInflater.inflate(ResID, null);
-              } /*if*/
-            final CharInfo ThisItem = getItem(Position);
-            ((TextView)TheView.findViewById(R.id.code)).setText(UnicodeUseful.FormatCharCode(ThisItem.Code));
+            ((TextView)TheView.findViewById(R.id.code)).setText(UnicodeUseful.FormatCharCode(TheItem.Code));
             final TextView LiteralView = (TextView)TheView.findViewById(R.id.literal);
-            LiteralView.setText(UnicodeUseful.CharToString(ThisItem.Code));
+            LiteralView.setText(UnicodeUseful.CharToString(TheItem.Code));
             LiteralView.setTypeface(CurFont, Typeface.NORMAL); /* if not already done */
-            ((TextView)TheView.findViewById(R.id.name)).setText(ThisItem.Name);
-            return
-                TheView;
-          } /*getView*/
+            ((TextView)TheView.findViewById(R.id.name)).setText(TheItem.Name);
+          } /*SetupView*/
 
       } /*CharItemAdapter*/;
 
-    class NameItemAdapter extends ArrayAdapter<String>
+    class NameItemAdapter extends CommonItemAdapter<String>
       {
-        static final int ResID = R.layout.name_list_item;
-        final LayoutInflater TemplateInflater = Main.this.getLayoutInflater();
 
         NameItemAdapter()
           {
-            super(Main.this, ResID);
+            super(R.layout.name_list_item);
           } /*NameItemAdapter*/
 
         @Override
-        public View getView
+        public void SetupView
           (
-            int Position,
-            View ReuseView,
-            android.view.ViewGroup Parent
+            String Item,
+            View TheView,
+            boolean DropDown
           )
           {
-            View TheView = ReuseView;
-            if (TheView == null)
-              {
-                TheView = TemplateInflater.inflate(ResID, null);
-              } /*if*/
-            ((TextView)TheView.findViewById(R.id.text1)).setText
-              (
-                getItem(Position)
-              );
-            return
-                TheView;
-          } /*getView*/
+            ((TextView)TheView.findViewById(R.id.text1)).setText(Item);
+          } /*SetupView*/
 
       } /*NameItemAdapter*/;
 
@@ -735,7 +828,7 @@ public class Main extends ActionActivity
               (
                 String.format
                   (
-                    java.util.Locale.US,
+                    UnicodeUseful.NoLocale,
                     "%s %s",
                     UnicodeUseful.FormatCharCode(TheChar.Code),
                     TheChar.Name
@@ -1106,9 +1199,42 @@ public class Main extends ActionActivity
           {
             ShowSelector = (Spinner)findViewById(R.id.show_prompt);
             final ShowItemAdapter ToShow = new ShowItemAdapter();
-            ToShow.add(new ShowModeItem(ShowModeEnum.Categories, R.string.category_prompt, R.string.categories_item));
-            ToShow.add(new ShowModeItem(ShowModeEnum.Searching, R.string.search_prompt, R.string.search_item));
-            ToShow.add(new ShowModeItem(ShowModeEnum.Favourites, R.string.faves_prompt, R.string.faves_item));
+            ToShow.add
+              (
+                new ShowModeItem
+                  (
+                    /*ModeEnum =*/ ShowModeEnum.Categories,
+                    /*PromptResID =*/ R.string.category_prompt,
+                    /*ItemResID =*/ R.string.categories_item
+                  )
+              );
+            ToShow.add
+              (
+                new ShowModeItem
+                  (
+                    /*ModeEnum =*/ ShowModeEnum.CodeBlocks,
+                    /*PromptResID =*/ R.string.code_block_prompt,
+                    /*ItemResID =*/ R.string.code_blocks_item
+                  )
+              );
+            ToShow.add
+              (
+                new ShowModeItem
+                  (
+                    /*ModeEnum =*/ ShowModeEnum.Searching,
+                    /*PromptResID =*/ R.string.search_prompt,
+                    /*ItemResID =*/ R.string.search_item
+                  )
+              );
+            ToShow.add
+              (
+                new ShowModeItem
+                  (
+                    /*ModeEnum =*/ ShowModeEnum.Favourites,
+                    /*PromptResID =*/ R.string.faves_prompt,
+                    /*ItemResID =*/ R.string.faves_item
+                  )
+              );
             ShowSelector.setAdapter(ToShow);
             ShowSelectorListener = new ShowingSelect();
             ShowSelector.setOnItemSelectedListener(ShowSelectorListener);
@@ -1134,6 +1260,29 @@ public class Main extends ActionActivity
               } /*if*/
             CategoryListViewListener = new CategorySelect();
             CategoryListView.setOnItemSelectedListener(CategoryListViewListener);
+          }
+          {
+            CodeBlockListView = (Spinner)findViewById(R.id.code_block_selector);
+            CodeBlockList = new CodeBlockItemAdapter();
+            for (int CategoryIndex = 0; CategoryIndex < Unicode.NrCharCategories; ++CategoryIndex)
+              {
+                CodeBlockList.add
+                  (
+                    new CodeBlockItem
+                      (
+                        /*Code =*/ Unicode.GetCategoryCode(CategoryIndex),
+                        /*Low =*/ Unicode.GetCategoryLowBoundByCode(CategoryIndex),
+                        /*High =*/ Unicode.GetCategoryHighBoundByCode(CategoryIndex)
+                      )
+                  );
+              } /*for*/
+            CodeBlockListView.setAdapter(CodeBlockList);
+            if (ToRestore == null)
+              {
+                CodeBlockListView.setSelection(ShowCategory);
+              } /*if*/
+            CodeBlockListViewListener = new CodeBlockSelect();
+            CodeBlockListView.setOnItemSelectedListener(CodeBlockListViewListener);
           }
         SearchEntry = (android.widget.EditText)findViewById(R.id.search_entry);
         SearchEntry.addTextChangedListener
@@ -1224,7 +1373,7 @@ public class Main extends ActionActivity
                   {
                     if (DetailCategory >= 0)
                       {
-                        SetShowingCategory(DetailCategory);
+                        SetShowingCategory(DetailCategory, false);
                         if (CurrentBG == null)
                           {
                             final int TheChar = CurChar;
@@ -1436,8 +1585,8 @@ public class Main extends ActionActivity
             final int CharIndex = Unicode.GetCharIndex(ToRestore.getInt("char"), false);
             ShowCharDetails(CharIndex >= 0 ? TableReader.GetCharByIndex(CharIndex) : null, true);
           }
-        SetShowingCategory(ToRestore.getInt("category"));
-        SetShowingMode(ShowModeEnum.Val(ToRestore.getInt("display_mode")));
+        SetShowingCategory(ToRestore.getInt("category"), false); /* doesn't matter how it calls SetShowingMode ... */
+        SetShowingMode(ShowModeEnum.Val(ToRestore.getInt("display_mode"))); /* ... because I do */
       } /*onRestoreInstanceState*/
 
     @Override

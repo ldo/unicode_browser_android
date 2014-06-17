@@ -4,6 +4,7 @@
     <string name="window_title">Unicode %s</string>
 
     <string name="category_prompt">Category:</string>
+    <string name="code_block_prompt">Code Block:</string>
     <string name="search_prompt">Name Like:</string>
     <string name="faves_prompt">Favourites</string>
 
@@ -13,6 +14,7 @@
     <string name="open">Open</string>
 
     <string name="categories_item">Categories</string>
+    <string name="code_blocks_item">Code Blocks</string>
     <string name="search_item">Search</string>
     <string name="faves_item">Favourites</string>
 
@@ -20,6 +22,7 @@
     <string name="searching">Searching...</string>
     <string name="search_no_chars">No matches found.</string>
     <string name="faves_no_chars">Tap character name to add as a favourite.</string>
+    <string name="code_range">%1$s-%2$s: %3$s</string>
 
     <string name="show">Show</string>
     <string name="aka">AKA:</string>

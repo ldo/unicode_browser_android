@@ -22,6 +22,8 @@ import java.util.ArrayList;
 public class UnicodeUseful
   {
 
+    public static java.util.Locale NoLocale = java.util.Locale.US;
+
     public static String FormatCharCode
       (
         int Code
@@ -29,7 +31,7 @@ public class UnicodeUseful
       /* returns the conventional U+xxxx representation for a Unicode character code. */
       {
         return
-            String.format(java.util.Locale.US, "U+%04X", Code);
+            String.format(NoLocale, "U+%04X", Code);
       } /*FormatCharCode*/
 
     public static String CharToString

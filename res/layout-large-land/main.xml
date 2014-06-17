@@ -36,6 +36,13 @@ Problem avoided by replacing LinearLayout nesting with a RelativeLayout. -->
             style="@style/spinner_common"
             android:layout_weight="100"
         />
+        <Spinner
+            android:id="@+id/code_block_selector"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            style="@style/spinner_common"
+            android:layout_weight="100"
+        />
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
