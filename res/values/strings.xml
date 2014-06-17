@@ -22,7 +22,7 @@
     <string name="searching">Searching...</string>
     <string name="search_no_chars">No matches found.</string>
     <string name="faves_no_chars">Tap character name to add as a favourite.</string>
-    <string name="code_range">%1$s-%2$s: %3$s</string>
+    <string name="code_range">%1$s-%2$s %3$s</string>
 
     <string name="show">Show</string>
     <string name="aka">AKA:</string>

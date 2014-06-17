@@ -9,6 +9,18 @@
         <!-- note: text settings are taken from spinner item layout style -->
     </style>
 
+    <style name="spinner_item_common" parent="@android:style/TextAppearance.Large">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:minHeight">36sp</item> <!-- layout_height seems to have no effect -->
+        <item name="android:singleLine">true</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:ellipsize">marquee</item>
+    </style>
+
+    <style name="spinner_item" parent="spinner_item_common">
+        <item name="android:textColor">@android:color/primary_text_light</item>
+    </style>
+
     <style name="button_common" parent="text_common">
         <item name="android:textColor">@android:color/primary_text_light</item>
     </style>

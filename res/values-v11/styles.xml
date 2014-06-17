@@ -1,9 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-
     <style name="spinner_common">
-        <!-- use standard background instead of @drawable/spinner_bg -->
+        <!-- use standard background on newer Android instead of @drawable/spinner_bg -->
         <!-- note: text settings are taken from spinner item layout style -->
+    </style>
+
+    <style name="spinner_item" parent="spinner_item_common">
+        <item name="android:textColor">@android:color/primary_text_dark</item>
     </style>
 
     <style name="text_editable" parent="text_common">

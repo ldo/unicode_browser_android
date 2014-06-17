@@ -276,7 +276,7 @@ public class Main extends ActionActivity
 
         public CategoryItemAdapter()
           {
-            super(android.R.layout.simple_spinner_item);
+            super(R.layout.dropdown_item);
           } /*CategoryItemAdapter*/
 
         @Override
@@ -316,7 +316,7 @@ public class Main extends ActionActivity
 
         public CodeBlockItemAdapter()
           {
-            super(android.R.layout.simple_spinner_item);
+            super(R.layout.dropdown_item);
           } /*CodeBlockItemAdapter*/
 
         @Override
@@ -436,7 +436,7 @@ public class Main extends ActionActivity
 
         public ShowItemAdapter()
           {
-            super(android.R.layout.simple_spinner_item);
+            super(R.layout.dropdown_item);
           } /*ShowItemAdapter*/
 
         @Override
