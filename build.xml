@@ -68,6 +68,8 @@
         <signjar
             keystore="${keystore.path}" alias="${keystore.alias}" storepass="${keystore.password}"
             jar="${out.packaged.file}"
+            sigalg="SHA1withRSA"
+            digestalg="SHA1"
             signedjar="${out.unaligned.file}"
             verbose="true"
         />
