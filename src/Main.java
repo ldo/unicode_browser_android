@@ -272,7 +272,7 @@ public class Main extends ActionActivity
 
       } /*CategorySelect*/;
 
-    abstract class CategorySortItemAdapter<CategoryItem> extends CommonItemAdapter<CategoryItem>
+    abstract class CategorySortItemAdapter<ItemType> extends CommonItemAdapter<ItemType>
       /* allows selection of list items by category code. */
       {
         final android.util.SparseArray<Integer> CodeToIndex =
@@ -289,7 +289,7 @@ public class Main extends ActionActivity
         public void Add
           (
             int CategoryCode,
-            CategoryItem Item
+            ItemType Item
           )
           /* Use this instead of add to populate CodeToIndex table. */
           {
